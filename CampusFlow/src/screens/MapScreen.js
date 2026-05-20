@@ -1,87 +1,73 @@
 // src/screens/MapScreen.js
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ActivityIndicator, Alert } from 'react-native';
-import MapView, { Marker, Circle } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { colors } from '../theme/colors';
 
-// Coordenadas estáticas dos pontos de estudo (Focadas na zona da FERI Maribor)
+// Hardcoded study spots around the FERI Maribor campus
 const STUDY_SPOTS = [
-  { id: '1', name: 'Biblioteca (Glavna Knjižnica)', lat: 46.5622, lng: 15.6380, description: 'Muito silenciosa. Ideal para focar.' },
-  { id: '2', name: 'Café do Campus', lat: 46.5615, lng: 15.6392, description: 'Ruído moderado. Bom para brainstorming.' },
-  { id: '3', name: 'Computer Lab (G-201)', lat: 46.5628, lng: 15.6375, description: 'Tomadas por todo o lado e PCs rápidos.' },
-  { id: '4', name: 'Study Room 4', lat: 46.5630, lng: 15.6388, description: 'Sala privada. Reservável.' },
+  { id: '1', title: 'FERI Library', description: 'Quiet study zone', latitude: 46.5622, longitude: 15.6380 },
+  { id: '2', title: 'Campus Cafe', description: 'Good for group work', latitude: 46.5615, longitude: 15.6392 },
+  { id: '3', title: 'G-201 Computer Lab', description: 'High-performance PCs', latitude: 46.5628, longitude: 15.6375 },
 ];
 
 export default function MapScreen() {
   const [location, setLocation] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
-    async function getInitialLocation() {
-      // 1. Pedir permissão para aceder ao GPS
+    (async () => {
+      // 1. Request GPS permissions from the user
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permissão negada', 'Precisamos do GPS para mostrar os spots perto de ti.');
-        setLoading(false);
+        setErrorMsg('Permission to access location was denied');
         return;
       }
 
-      // 2. Ir buscar a localização atual do telemóvel
+      // 2. Get the user's current location
       let currentLocation = await Location.getCurrentPositionAsync({});
       setLocation(currentLocation.coords);
-      setLoading(false);
-    }
-
-    getInitialLocation();
+    })();
   }, []);
 
-  if (loading) {
+  // Show a loading spinner while waiting for the GPS
+  if (!location && !errorMsg) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>A carregar o mapa do Campus...</Text>
+        <Text style={{ marginTop: 10, color: colors.textLight }}>Finding your location...</Text>
       </View>
     );
   }
 
-  // Se não conseguir a localização, centra o mapa por defeito na FERI Maribor
-  const defaultRegion = {
-    latitude: location ? location.latitude : 46.5620,
-    longitude: location ? location.longitude : 15.6385,
-    latitudeDelta: 0.005, // Define o Zoom do mapa
-    longitudeDelta: 0.005,
-  };
-
   return (
     <View style={styles.container}>
-      <MapView 
-        style={styles.map} 
-        initialRegion={defaultRegion}
-        showsUserLocation={true} // Mostra a bola azul do utilizador
-        followsUserLocation={true}
-      >
-        {/* Desenhar os marcadores dos Spots de Estudo */}
-        {STUDY_SPOTS.map((spot) => (
-          <Marker
-            key={spot.id}
-            coordinate={{ latitude: spot.lat, longitude: spot.lng }}
-            title={spot.name}
-            description={spot.description}
-            pinColor={colors.primary} // Usa o azul do vosso design token
-          />
-        ))}
-
-        {/* Exemplo de Geofencing Visual: Raio de 50 metros à volta da Biblioteca */}
-        {location && (
-          <Circle
-            center={{ latitude: 46.5622, longitude: 15.6380 }}
-            radius={50} // 50 metros
-            strokeColor="rgba(0, 85, 164, 0.5)"
-            fillColor="rgba(0, 85, 164, 0.2)"
-          />
-        )}
-      </MapView>
+      {errorMsg ? (
+        <Text style={styles.errorText}>{errorMsg}</Text>
+      ) : (
+        <MapView
+          style={styles.map}
+          showsUserLocation={true} // Displays the blue dot for the user
+          initialRegion={{
+            latitude: location ? location.latitude : 46.5622,
+            longitude: location ? location.longitude : 15.6380,
+            latitudeDelta: 0.005, // Controls the zoom level
+            longitudeDelta: 0.005,
+          }}
+        >
+          {/* Loop through our study spots and place pins on the map */}
+          {STUDY_SPOTS.map((spot) => (
+            <Marker
+              key={spot.id}
+              coordinate={{ latitude: spot.latitude, longitude: spot.longitude }}
+              title={spot.title}
+              description={spot.description}
+              pinColor={colors.primary}
+            />
+          ))}
+        </MapView>
+      )}
     </View>
   );
 }
@@ -89,10 +75,10 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
   },
   centerContainer: {
     flex: 1,
@@ -100,9 +86,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.background,
   },
-  loadingText: {
-    marginTop: 10,
-    color: colors.textLight,
+  errorText: {
+    textAlign: 'center',
+    marginTop: 50,
+    color: 'red',
     fontSize: 16,
   },
 });
