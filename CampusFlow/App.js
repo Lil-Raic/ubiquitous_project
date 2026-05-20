@@ -1,14 +1,12 @@
+// App.js
 import React from 'react';
-import { SafeAreaView, StatusBar } from 'react-native';
-import LoginScreen from './src/screens/LoginScreen';
-import MapScreen from './src/screens/MapScreen';
-import { colors } from './src/theme/colors';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar barStyle="dark-content" />
-      <MapScreen />
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <AppNavigator />
+    </SafeAreaProvider>
   );
 }
