@@ -19,7 +19,7 @@ export default function WelcomeScreen({ navigation }) {
       <TouchableOpacity 
         style={styles.button} 
         // This command replaces the welcome screen with your tabs so the user can't go "back" to the welcome screen
-        onPress={() => navigation.replace('MainTabs')} 
+        onPress={() => navigation.replace('Login')} 
       >
         <Text style={styles.buttonText}>Get Started</Text>
       </TouchableOpacity>

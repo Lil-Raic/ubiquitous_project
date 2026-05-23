@@ -1,9 +1,29 @@
 // src/screens/LoginScreen.js
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../config/firebase';
 import { colors } from '../theme/colors';
 
-export default function LoginScreen() {
+export default function LoginScreen({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Aviso", "Preenche o e-mail e a password.");
+      return;
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // Se tiver sucesso, apaga o ecrã de login e entra na app!
+      navigation.replace('MainTabs'); 
+    } catch (error) {
+      Alert.alert("Erro de Login", "As credenciais estão incorretas.");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.card}>
@@ -14,6 +34,10 @@ export default function LoginScreen() {
           style={styles.input}
           placeholder="University Email"
           placeholderTextColor={colors.textLight}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
 
         <TextInput
@@ -21,10 +45,29 @@ export default function LoginScreen() {
           placeholder="Password"
           placeholderTextColor={colors.textLight}
           secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          autoCapitalize="none"
         />
 
-        <TouchableOpacity style={styles.button}>
+        {/* Botão Principal: Log In */}
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Log In</Text>
+        </TouchableOpacity>
+
+        {/* Divisor Visual */}
+        <View style={styles.dividerContainer}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* Botão Secundário: Register (Com o "R" maiúsculo na navegação) */}
+        <TouchableOpacity 
+          style={styles.registerButtonOutline} 
+          onPress={() => navigation.navigate('Register')}
+        >
+          <Text style={styles.registerButtonTextOutline}>Create an Account</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -79,6 +122,35 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: colors.surface,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E7EB', // Cinza suave
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    color: colors.textLight,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  registerButtonOutline: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: colors.primary,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  registerButtonTextOutline: {
+    color: colors.primary,
     fontSize: 16,
     fontWeight: 'bold',
   },
