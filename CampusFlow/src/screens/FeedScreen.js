@@ -1,17 +1,34 @@
-// src/screens/FeedScreen.js
-import React from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { collection , onSnapshot } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { colors } from '../theme/colors';
-
-// Sample data representing the FERI study spaces
-const STUDY_SPOTS_DATA = [
-  { id: '1', name: 'FERI Library', zone: 'A-Building, 1st Floor', noise: 'Quiet', crowd: '45% Full', status: 'Open' },
-  { id: '2', name: 'Campus Cafe', zone: 'G-Building, Ground Floor', noise: 'Loud / Social', crowd: '90% Full', status: 'Open' },
-  { id: '3', name: 'G-201 Computer Lab', zone: 'G-Building, 2nd Floor', noise: 'Moderate', crowd: '20% Full', status: 'Open' },
-  { id: '4', name: 'Main Hallway Lounge', zone: 'A-Building, Entrance', noise: 'Loud', crowd: '75% Full', status: 'Open' },
-];
+import { useNavigation } from '@react-navigation/native';
 
 export default function FeedScreen() {
+  const navigation = useNavigation();
+
+  const [spots, setSpots] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const spotsRef = collection (db,'study_spots');
+
+    const unsubscribe = onSnapshot(spotsRef, (snapshot) => {
+      const spotsList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      setSpots(spotsList);
+      setLoading(false);
+    });
+
+    return () => {
+      unsubscribe();
+    }
+  }, []);
+
   // This helper function creates individual cards for each spot
   const renderSpotCard = ({ item }) => (
     <View style={styles.card}>
@@ -36,16 +53,25 @@ export default function FeedScreen() {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.viewButton}>
+      <TouchableOpacity style={styles.viewButton} onPress={() => navigation.navigate('Review')}>
         <Text style={styles.viewButtonText}>View Details</Text>
       </TouchableOpacity>
     </View>
   );
 
+  if (loading) {
+    return (
+      <View style = {[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
+        <ActivityIndicator size = "large" color = {colors.primary} />
+        <Text style= {{ marginTop: 10, color: colors.textLight }}>Connecting to the database...</Text>
+      </View>
+    )
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
-        data={STUDY_SPOTS_DATA}
+        data={spots}
         renderItem={renderSpotCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}

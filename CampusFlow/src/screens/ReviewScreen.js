@@ -1,9 +1,31 @@
-// src/screens/ReviewScreen.js
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity,  ActivityIndicator, ScrollView, Alert } from 'react-native';
+import * as Location from 'expo-location';
+import { collection, query, where, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { colors } from '../theme/colors';
 
+const Library_LAT = 46.5592;
+const Library_LON = 15.6427;
+const MAX_DISTANCE_METERS = 50;
+
+const getDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371e3; // Earth's radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; 
+};
+
 export default function ReviewScreen() {
+
+  const [locationValid, setLocationValid] = useState(false);
+  const [checkingLocation, setCheckingLocation] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // States to keep track of the selected options for each metric
   const [noise, setNoise] = useState('Moderate');
   const [crowd, setCrowd] = useState('Medium');
@@ -11,11 +33,68 @@ export default function ReviewScreen() {
   const [outlets, setOutlets] = useState('Available');
   const [lighting, setLighting] = useState('Bright');
 
-  const handleSubmit = () => {
-    Alert.alert(
-      "Review Submitted!",
-      `Thank you for keeping FERI updated!\n\nNoise: ${noise}\nCrowd: ${crowd}\nWiFi: ${wifi}\nOutlets: ${outlets}\nLighting: ${lighting}`
-    );
+  useEffect(() => {
+    verifyLocation();
+  }, []);
+
+  const verifyLocation = async () => {
+    setCheckingLocation(true);
+    
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission denied', 'We need your location to verify you are on campus.');
+      setCheckingLocation(false);
+      return;
+    }
+
+    let location = await Location.getCurrentPositionAsync({});
+    const userLat = location.coords.latitude;
+    const userLon = location.coords.longitude;
+
+    const distance = getDistance(userLat, userLon, Library_LAT, Library_LON);
+
+    if (distance <= MAX_DISTANCE_METERS) {
+      setLocationValid(true);
+    } else {
+      setLocationValid(false);
+    }
+    setCheckingLocation(false);
+  };
+
+  const handleSubmit = async () => {
+
+    console.log("SUBMITED");
+    setIsSubmitting(true);
+    try {
+      // Find the document in the database
+      const spotsRef = collection(db, 'study_spots');
+      const q = query(spotsRef, where("name", "==", "University of Maribor Library"));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        Alert.alert("Error", "Library not found in database.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Grab the specific ID and push ALL your new metrics
+      const libraryDoc = querySnapshot.docs[0];
+      const libraryRef = doc(db, 'study_spots', libraryDoc.id);
+
+      await updateDoc(libraryRef, {
+        noise: noise,
+        crowd: crowd,
+        wifi: wifi,
+        outlets: outlets,
+        lighting: lighting
+      });
+
+      Alert.alert("Success!", "Your live update has been posted to the feed.");
+    } catch (error) {
+      Alert.alert("Error", "Could not submit review.");
+      console.error(error);
+    }
+    setIsSubmitting(false);
   };
 
   // Helper component to render option buttons row
@@ -40,6 +119,30 @@ export default function ReviewScreen() {
       </View>
     </View>
   );
+
+  if (checkingLocation) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Verifying your campus location...</Text>
+      </View>
+    );
+  }
+
+  if (!locationValid) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <Text style={styles.errorIcon}>🚫</Text>
+        <Text style={styles.errorTitle}>Too Far Away</Text>
+        <Text style={styles.errorText}>
+          You must be within 50 meters of the Library to submit a live update.
+        </Text>
+        <TouchableOpacity style={styles.retryButton} onPress={verifyLocation}>
+          <Text style={styles.retryButtonText}>Check Location Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -142,4 +245,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+
+  center: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    padding: 20 
+  },
+  errorIcon: { fontSize: 50, marginBottom: 10 },
+  errorTitle: { fontSize: 22, fontWeight: 'bold', color: colors.text, marginBottom: 10 },
+  errorText: { fontSize: 16, color: colors.textLight, textAlign: 'center', marginBottom: 20 },
+  retryButton: { backgroundColor: colors.primary, padding: 12, borderRadius: 8 },
+  retryButtonText: { color: 'white', fontWeight: 'bold' },
+
+  contentContainer: { 
+    padding: 20,
+    paddingBottom: 100 // <-- This pushes the submit button up above the tab bar!
+  },
 });
+
