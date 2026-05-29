@@ -1,4 +1,3 @@
-// src/screens/LoginScreen.js
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -11,16 +10,17 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Aviso", "Preenche o e-mail e a password.");
+      Alert.alert("Alert", "Fill both the email and password boxes.");
       return;
     }
 
     try {
+
       await signInWithEmailAndPassword(auth, email, password);
-      // Se tiver sucesso, apaga o ecrã de login e entra na app!
-      navigation.replace('MainTabs'); 
+      navigation.replace('MainTabs');
+
     } catch (error) {
-      Alert.alert("Erro de Login", "As credenciais estão incorretas.");
+      Alert.alert("Login error", "Wrong credentials.");
     }
   };
 
