@@ -32,7 +32,7 @@ export default function LoginScreen({ navigation }) {
 
         <TextInput
           style={styles.input}
-          placeholder="University Email"
+          placeholder="Email"
           placeholderTextColor={colors.textLight}
           value={email}
           onChangeText={setEmail}

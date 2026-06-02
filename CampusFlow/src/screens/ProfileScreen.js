@@ -1,22 +1,21 @@
-// src/screens/ProfileScreen.js
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { auth } from '../config/firebase';
 import { signOut } from 'firebase/auth';
-import { colors } from '../theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { ThemeMode } from '../theme/ThemeMode';
 
 export default function ProfileScreen() {
-  
   const user = auth.currentUser;
   const navigation = useNavigation();
+  
+  const { colors, isDarkMode } = useContext(ThemeMode);
+  const styles = getStyles(colors, isDarkMode);
 
- const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
       await signOut(auth); 
-      
-      // 3. O RESET limpa o histórico de navegação de todas as abas e força a app a ir para o Login
       navigation.reset({
         index: 0,
         routes: [{ name: 'Login' }],
@@ -26,34 +25,31 @@ export default function ProfileScreen() {
     }
   };
 
-
   return (
     <View style={styles.container}>
       <View style={styles.profileCard}>
-        {/* Ícone de Perfil */}
-        <Ionicons name="person-circle" size={100} color={colors.primary} />
+        <Ionicons name="person-circle-outline" size={100} color={isDarkMode ? '#FFFFFF' : colors.primary} />
         
-        {/* Campo do Nome */}
         <View style={styles.infoContainer}>
-          <Text style={styles.label}>Nome de Utilizador:</Text>
-          <Text style={styles.value}>{user?.displayName || "Estudante FERI"}</Text>
+          <Text style={styles.label}>Username</Text>
+          <Text style={styles.value}>{user?.displayName || "Student"}</Text>
         </View>
 
-        {/* Campo do E-mail */}
         <View style={styles.infoContainer}>
-          <Text style={styles.label}>E-mail:</Text>
+          <Text style={styles.label}>Email:</Text>
           <Text style={styles.value}>{user?.email}</Text>
         </View>
+        
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={22} color={colors.surface} />
-          <Text style={styles.logoutText}>Terminar Sessão</Text>
+          <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
+          <Text style={styles.logoutText}>Log out</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -69,9 +65,11 @@ const styles = StyleSheet.create({
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: isDarkMode ? 0.3 : 0.1, 
     shadowRadius: 8,
     marginTop: 20,
+    borderWidth: isDarkMode ? 1 : 0, 
+    borderColor: colors.border,
   },
   infoContainer: {
     width: '100%',
@@ -93,18 +91,18 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     flexDirection: 'row',
-    backgroundColor: '#EF4444', // Vermelho para destacar a ação de saída
+    backgroundColor: '#EF4444', 
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 10,
     marginTop: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8, // Espaço entre o ícone e o texto
-    width: '100%', // Faz o botão ocupar a largura do cartão
+    gap: 8, 
+    width: '100%', 
   },
   logoutText: {
-    color: colors.surface,
+    color: '#FFFFFF', 
     fontSize: 16,
     fontWeight: 'bold',
   }

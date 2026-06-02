@@ -1,50 +1,65 @@
-// src/screens/RegisterScreen.js
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { colors } from '../theme/colors';
 
 export default function RegisterScreen({ navigation }) {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert("Erro", "Por favor, preenche todos os campos.");
+    if (!username || !email || !password || !confirmPassword) {
+      Alert.alert("Error", "Please fill all of the boxes.");
       return;
     }
-
+    
     if (password !== confirmPassword) {
       Alert.alert("Erro", "As passwords introduzidas não são iguais.");
       return;
     }
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      Alert.alert("Sucesso", "Conta criada com sucesso!");
-      navigation.goBack(); // Volta automaticamente para o ecrã de Login
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      await updateProfile(userCredential.user, {
+        displayName: username
+      });
+
+      Alert.alert("Sucess", "Account created successfully!");
+      navigation.goBack(); 
     } catch (error) {
-      Alert.alert("Erro no Registo", error.message);
+      Alert.alert("Register Error:", error.message);
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>Criar Conta</Text>
-        <Text style={styles.subtitle}>Regista-te no CampusFlow para acompanhar e atualizar o estado das salas.</Text>
+        <Text style={styles.title}>Create an account</Text> 
+        <Text style={styles.subtitle}>Register on CampusFlow to follow and update the state of study rooms.</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="E-mail Universitário"
+          placeholder="Username"
+          placeholderTextColor={colors.textLight}
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="words"
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
           placeholderTextColor={colors.textLight}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
         />
+        
 
         <TextInput
           style={styles.input}
@@ -57,7 +72,7 @@ export default function RegisterScreen({ navigation }) {
 
         <TextInput
           style={styles.input}
-          placeholder="Confirmar Password"
+          placeholder="Confirm Password"
           placeholderTextColor={colors.textLight}
           secureTextEntry
           value={confirmPassword}
@@ -65,12 +80,11 @@ export default function RegisterScreen({ navigation }) {
         />
 
         <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>Registar Conta</Text>
+          <Text style={styles.buttonText}>Register</Text>
         </TouchableOpacity>
 
-        {/* Botão para voltar ao Login caso o utilizador já tenha conta */}
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.loginLink}>
-          <Text style={styles.loginLinkText}>Já tens uma conta? Faz Login</Text>
+          <Text style={styles.loginLinkText}>Have an account? Log in</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
