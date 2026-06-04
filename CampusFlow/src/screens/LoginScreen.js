@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { colors } from '../theme/colors';
+import { BouncyButton } from '../theme/UiAnimations';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -15,10 +16,8 @@ export default function LoginScreen({ navigation }) {
     }
 
     try {
-
       await signInWithEmailAndPassword(auth, email, password);
       navigation.replace('MainTabs');
-
     } catch (error) {
       Alert.alert("Login error", "Wrong credentials.");
     }
@@ -50,25 +49,22 @@ export default function LoginScreen({ navigation }) {
           autoCapitalize="none"
         />
 
-        {/* Botão Principal: Log In */}
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <BouncyButton style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Log In</Text>
-        </TouchableOpacity>
+        </BouncyButton>
 
-        {/* Divisor Visual */}
         <View style={styles.dividerContainer}>
           <View style={styles.dividerLine} />
           <Text style={styles.dividerText}>OR</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Botão Secundário: Register (Com o "R" maiúsculo na navegação) */}
-        <TouchableOpacity 
+        <BouncyButton 
           style={styles.registerButtonOutline} 
           onPress={() => navigation.navigate('Register')}
         >
           <Text style={styles.registerButtonTextOutline}>Create an Account</Text>
-        </TouchableOpacity>
+        </BouncyButton>
       </View>
     </View>
   );
@@ -133,7 +129,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E5E7EB', // Cinza suave
+    backgroundColor: '#E5E7EB', 
   },
   dividerText: {
     marginHorizontal: 10,

@@ -35,7 +35,21 @@ export default function MapScreen({ navigation }) {
     return () => unsubscribe();
   }, []);
 
+  const isDataStale = (lastUpdated) => {
+    if (!lastUpdated) return true;
+    let updateTime;
+    
+    if (lastUpdated.toDate) {
+      updateTime = lastUpdated.toDate();
+    } else if (lastUpdated.seconds) {
+      updateTime = new Date(lastUpdated.seconds * 1000);
+    } else {
+      updateTime = new Date(lastUpdated);
+    } 
+    const hoursDifference = Math.abs(new Date() - updateTime) / 36e5;
 
+    return hoursDifference >= 2; 
+  };
 
   if (!location && !errorMsg) {
     return (
@@ -63,26 +77,45 @@ export default function MapScreen({ navigation }) {
             longitudeDelta: 0.005,
           }}
         >
-          {spots.map((spot) => (
-            <Marker
-              key={spot.id}
-              coordinate={{ 
-                latitude: parseFloat(spot.latitude), 
-                longitude: parseFloat(spot.longitude)
-              }}
-              title={spot.name}
-              description="Tap here to view reviews"
-              pinColor={colors.primary}
-              onCalloutPress={() => {
-                navigation.navigate('Review', {
-                  name: spot.name,
-                  latitude: parseFloat(spot.latitude),
-                  longitude: parseFloat(spot.longitude),
-                  lastUpdated: spot.lastUpdated
-                });
-              }}
-            />
-          ))}
+          {spots.map((spot) => {
+            const stale = isDataStale(spot.lastUpdated);
+
+            const displayNoise = stale ? "Unknown" : (spot.noise || "Unknown");
+            const displayCrowd = stale ? "Unknown" : (spot.crowd || "Unknown");
+            const displayWifi = stale ? "Unknown" : (spot.wifi || "Unknown");
+            const displayOutlets = stale ? "Unknown" : (spot.outlets || "Unknown");
+            const displayLighting = stale ? "Unknown" : (spot.lighting || "Unknown");
+
+            const safeTimestamp = spot.lastUpdated ? 
+              (spot.lastUpdated.toDate ? spot.lastUpdated.toDate().toISOString() : spot.lastUpdated) 
+              : null;
+
+            return (
+              <Marker
+                key={spot.id}
+                coordinate={{ 
+                  latitude: parseFloat(spot.latitude), 
+                  longitude: parseFloat(spot.longitude)
+                }}
+                title={spot.name}
+                description="Tap here to view reviews"
+                pinColor={colors.primary}
+                onCalloutPress={() => {
+                  navigation.navigate('Review', {
+                    name: spot.name,
+                    latitude: parseFloat(spot.latitude),
+                    longitude: parseFloat(spot.longitude),
+                    lastUpdated: safeTimestamp,
+                    noise: displayNoise,
+                    crowd: displayCrowd,
+                    wifi: displayWifi,
+                    outlets: displayOutlets,
+                    lighting: displayLighting
+                  });
+                }}
+              />
+            );
+          })}
         </MapView>
         ) : null
       )}

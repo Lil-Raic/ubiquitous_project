@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { auth, db } from '../config/firebase';
 import { deleteUser, signOut } from 'firebase/auth';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ThemeMode } from '../theme/ThemeMode';
 import { doc, deleteDoc } from 'firebase/firestore';
 
+import { BouncyButton } from '../theme/UiAnimations';
 
 export default function ProfileScreen() {
   const user = auth.currentUser;
@@ -87,18 +88,18 @@ export default function ProfileScreen() {
           <Text style={styles.value}>{user?.email}</Text>
         </View>
         
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <BouncyButton style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
           <Text style={styles.logoutText}>Log out</Text>
-        </TouchableOpacity>
+        </BouncyButton>
 
-        <TouchableOpacity 
+        <BouncyButton 
           style={[styles.logoutButton, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#EF4444', marginTop: 40 }]} 
           onPress={handleDeleteAccount}
         >
           <Ionicons name="trash-outline" size={22} color="#EF4444" />
           <Text style={[styles.logoutText, { color: '#EF4444' }]}>Delete Account</Text>
-        </TouchableOpacity>
+        </BouncyButton>
       </View>
     </View>
   );

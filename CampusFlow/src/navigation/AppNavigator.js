@@ -9,6 +9,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ThemeMode } from '../theme/ThemeMode';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LiftButton } from '../theme/UiAnimations'
 
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
@@ -29,12 +30,12 @@ function HeaderRightActions() {
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
-      <TouchableOpacity onPress={toggleTheme} style={{ marginRight: 20 }}>
+      <LiftButton onPress={toggleTheme} style={{ marginRight: 20 }}>
         <Ionicons name={isDarkMode ? "moon" : "sunny"} size={26} color="#FFFFFF" />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+      </LiftButton>
+      <LiftButton onPress={() => navigation.navigate('Profile')}>
         <Ionicons name="person-circle-outline" size={32} color="#FFFFFF" />
-      </TouchableOpacity>
+      </LiftButton>
     </View>
   );
 }
@@ -65,7 +66,13 @@ function TabNavigator() {
         tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
         headerStyle: { backgroundColor: colors.primary, height: UNIVERSAL_HEADER_HEIGHT },
         headerTintColor: '#FFFFFF', 
-        headerRight: () => <HeaderRightActions /> 
+        headerRight: () => <HeaderRightActions />, 
+
+        tabBarButton: (props) => (
+          <LiftButton style={props.style} onPress={props.onPress}>
+            {props.children}
+          </LiftButton>
+        )
       }}
     >
      <Tab.Screen 

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { 
-  StyleSheet, View, Text, TextInput, TouchableOpacity, 
+  StyleSheet, View, Text, TextInput, 
   FlatList, Alert, ActivityIndicator, KeyboardAvoidingView, Platform 
 } from 'react-native';
 import { collection, onSnapshot, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { ThemeMode } from '../theme/ThemeMode';
+import { BouncyButton, LiftButton, CustomToast } from '../theme/UiAnimations';
 
 export default function AdminScreen() {
   const { colors, isDarkMode } = useContext(ThemeMode);
@@ -18,6 +19,9 @@ export default function AdminScreen() {
   const [newName, setNewName] = useState('');
   const [newLat, setNewLat] = useState('');
   const [newLon, setNewLon] = useState('');
+
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     const spotsRef = collection(db, 'study_spots');
@@ -50,7 +54,11 @@ export default function AdminScreen() {
         lastUpdated: null 
       });
 
-      Alert.alert("Success", `${newName} has been added to the database!`);
+      setToastMessage(`${newName} added successfully!`);
+      setShowToast(true);
+      
+      setTimeout(() => setShowToast(false), 3000);
+
       setNewName(''); setNewLat(''); setNewLon('');
     } catch (error) {
       Alert.alert("Error", "Could not add building.");
@@ -122,9 +130,9 @@ export default function AdminScreen() {
           </View>
         </View>
         
-        <TouchableOpacity style={styles.addButton} onPress={handleAddSpot} disabled={isSubmitting}>
+        <BouncyButton style={styles.addButton} onPress={handleAddSpot} disabled={isSubmitting}>
           {isSubmitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.addButtonText}>+ Add to Database</Text>}
-        </TouchableOpacity>
+        </BouncyButton>
       </View>
     </View>
   );
@@ -134,9 +142,9 @@ export default function AdminScreen() {
       <View style={styles.dbCardInfo}>
         <Text style={styles.spotName}>{item.name}</Text>
       </View>
-      <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteSpot(item.id, item.name)}>
+      <LiftButton style={styles.deleteButton} onPress={() => handleDeleteSpot(item.id, item.name)}>
         <Text style={styles.deleteButtonText}>Delete</Text>
-      </TouchableOpacity>
+      </LiftButton>
     </View>
   );
 
@@ -152,6 +160,8 @@ export default function AdminScreen() {
         contentContainerStyle={styles.listContainer}
         ListEmptyComponent={<Text style={styles.emptyText}>No locations in database.</Text>}
       />
+      
+      <CustomToast visible={showToast} message={toastMessage} />
     </KeyboardAvoidingView>
   );
 }
@@ -159,7 +169,6 @@ export default function AdminScreen() {
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   listContainer: { padding: 16, paddingBottom: 40 },
-  mainTitle: { fontSize: 24, fontWeight: 'bold', color: colors.primary, marginBottom: 6, textAlign: 'center', marginTop: 10 },
   subtitle: { fontSize: 14, color: colors.textLight, textAlign: 'center', marginBottom: 24, lineHeight: 20 },
   formCard: { 
     backgroundColor: colors.surface, 

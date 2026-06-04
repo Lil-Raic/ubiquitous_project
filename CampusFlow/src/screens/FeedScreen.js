@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, 
-  ActivityIndicator
- } from 'react-native';
+import { StyleSheet, View, Text, FlatList, ActivityIndicator } from 'react-native';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useNavigation } from '@react-navigation/native';
 import { ThemeMode } from '../theme/ThemeMode';
+import { LiftButton, StaggeredCard } from '../theme/UiAnimations'; 
 
 export default function FeedScreen() {
   const navigation = useNavigation();
@@ -49,8 +48,8 @@ export default function FeedScreen() {
 
     return hoursDifference >= 2; 
   };
-  
-  const renderSpotCard = ({ item }) => {
+
+  const renderSpotCard = ({ item, index }) => {
     const stale = isDataStale(item.lastUpdated);
 
     const displayNoise = stale ? "Unknown" : (item.noise || "Unknown");
@@ -64,48 +63,51 @@ export default function FeedScreen() {
       : null;
 
     return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.spotName}>{item.name}</Text>
-          <Text style={[styles.statusTag, { color: item.status === 'Open' ? '#10B981' : '#EF4444' }]}>
-            {item.status || 'Open'}
-          </Text>
-        </View>
-        
-        <Text style={styles.spotZone}>{item.zone}</Text>
-        
-        <View style={styles.statsRow}>
-          <View style={styles.statBadge}>
-            <Text style={styles.statLabel}>🔊 Noise:</Text>
-            <Text style={[styles.statValue, stale && { color: colors.textLight, fontStyle: 'italic' }]}>
-              {displayNoise}
+      <StaggeredCard index={index}>
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.spotName}>{item.name}</Text>
+            <Text style={[styles.statusTag, { color: item.status === 'Open' ? '#10B981' : '#EF4444' }]}>
+              {item.status || 'Open'}
             </Text>
           </View>
-          <View style={styles.statBadge}>
-            <Text style={styles.statLabel}>👥 Crowdedness:</Text>
-            <Text style={[styles.statValue, stale && { color: colors.textLight, fontStyle: 'italic' }]}>
-              {displayCrowd}
-            </Text>
+          
+          <Text style={styles.spotZone}>{item.zone}</Text>
+          
+          <View style={styles.statsRow}>
+            <View style={styles.statBadge}>
+              <Text style={styles.statLabel}>🔊 Noise:</Text>
+              <Text style={[styles.statValue, stale && { color: colors.textLight, fontStyle: 'italic' }]}>
+                {displayNoise}
+              </Text>
+            </View>
+            <View style={styles.statBadge}>
+              <Text style={styles.statLabel}>👥 Crowdedness:</Text>
+              <Text style={[styles.statValue, stale && { color: colors.textLight, fontStyle: 'italic' }]}>
+                {displayCrowd}
+              </Text>
+            </View>
           </View>
-        </View>
 
-        <TouchableOpacity 
-          style={styles.viewButton}
-          onPress={() => navigation.navigate('Review', {
-            name: item.name, 
-            latitude: item.latitude || 46.5592, 
-            longitude: item.longitude || 15.6427, 
-            lastUpdated: safeTimestamp, 
-            noise: displayNoise, 
-            crowd: displayCrowd,
-            wifi: displayWifi,
-            outlets: displayOutlets,
-            lighting: displayLighting
-          })}
-        >
-          <Text style={styles.viewButtonText}>View/Update Details</Text>
-        </TouchableOpacity>
-      </View>
+          {/* 4. Swap to the LiftButton for a lightweight, premium interaction */}
+          <LiftButton 
+            style={styles.viewButton}
+            onPress={() => navigation.navigate('Review', {
+              name: item.name, 
+              latitude: item.latitude || 46.5592, 
+              longitude: item.longitude || 15.6427, 
+              lastUpdated: safeTimestamp, 
+              noise: displayNoise, 
+              crowd: displayCrowd,
+              wifi: displayWifi,
+              outlets: displayOutlets,
+              lighting: displayLighting
+            })}
+          >
+            <Text style={styles.viewButtonText}>View/Update Details</Text>
+          </LiftButton>
+        </View>
+      </StaggeredCard>
     );
   };
 

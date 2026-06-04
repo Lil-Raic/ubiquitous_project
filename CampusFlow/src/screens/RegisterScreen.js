@@ -5,6 +5,7 @@ import { auth } from '../config/firebase';
 import { colors } from '../theme/colors';
 import { doc, getDoc, setDoc } from 'firebase/firestore'; 
 import { db } from '../config/firebase';
+import { BouncyButton } from '../theme/UiAnimations';
 
 export default function RegisterScreen({ navigation }) {
   const [username, setUsername] = useState('');
@@ -98,9 +99,9 @@ export default function RegisterScreen({ navigation }) {
           onChangeText={setConfirmPassword}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <BouncyButton style={styles.button} onPress={handleRegister}>
           <Text style={styles.buttonText}>Register</Text>
-        </TouchableOpacity>
+        </BouncyButton>
 
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.loginLink}>
           <Text style={styles.loginLinkText}>Have an account? Log in</Text>

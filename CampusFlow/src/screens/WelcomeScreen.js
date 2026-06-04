@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
+import { BouncyButton } from '../theme/UiAnimations';
 
 export default function WelcomeScreen({ navigation }) {
   return (
@@ -13,12 +14,12 @@ export default function WelcomeScreen({ navigation }) {
         </Text>
       </View>
 
-      <TouchableOpacity 
+      <BouncyButton
         style={styles.button} 
         onPress={() => navigation.replace('Login')} 
       >
         <Text style={styles.buttonText}>Get Started</Text>
-      </TouchableOpacity>
+      </BouncyButton>
     </View>
   );
 }
