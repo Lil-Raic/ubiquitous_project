@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, 
+  ScrollView, Alert,LayoutAnimation, Platform, UIManager, Animated 
+} from 'react-native';
 import * as Location from 'expo-location';
 import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -15,6 +17,10 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c; 
 };
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const draftMemory = {};
 
@@ -40,6 +46,9 @@ export default function ReviewScreen({ route, navigation }) {
   const [wifi, setWifi] = useState(null);
   const [outlets, setOutlets] = useState(null);
   const [lighting, setLighting] = useState(null);
+
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+  const toastAnim = React.useRef(new Animated.Value(-100)).current;
 
   useEffect(() => {
     if (targetName) {
@@ -109,6 +118,21 @@ export default function ReviewScreen({ route, navigation }) {
     draftMemory[targetName][key] = value;
   };
 
+  const animateButton = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.95, duration: 100, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true })
+    ]).start();
+  };
+
+  const showToastAndGoBack = () => {
+    Animated.sequence([
+      Animated.timing(toastAnim, { toValue: 60, duration: 400, useNativeDriver: true }),
+      Animated.delay(1500),
+      Animated.timing(toastAnim, { toValue: -100, duration: 300, useNativeDriver: true })
+    ]).start();
+  };
+
   const handleSubmit = async () => {
     if (!noise && !crowd && !wifi && !outlets && !lighting) {
       Alert.alert("Nothing to update", "Please update at least one condition before submitting.");
@@ -143,8 +167,8 @@ export default function ReviewScreen({ route, navigation }) {
       setNoise(null); setCrowd(null); setWifi(null); setOutlets(null); setLighting(null);
       setActiveSection(null);
 
-      Alert.alert("Success!", "Your live update has been posted to the feed.");
-      navigation.goBack();
+      showToastAndGoBack();
+      
     } catch (error) {
       Alert.alert("Error", "Could not submit review.");
     }
@@ -166,7 +190,10 @@ export default function ReviewScreen({ route, navigation }) {
           </View>
           <TouchableOpacity
             style={styles.updateButtonSmall}
-            onPress={() => setActiveSection(isActive ? null : key)}
+            onPress={() => {
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              setActiveSection(isActive ? null : key);
+            }}
           >
             <Text style={styles.updateButtonSmallText}>{isActive ? 'Cancel' : 'Update'}</Text>
           </TouchableOpacity>
@@ -182,7 +209,8 @@ export default function ReviewScreen({ route, navigation }) {
                   style={[styles.optionButton, isSelected && styles.optionButtonSelected]}
                   onPress={() => {
                     saveToMemory(key, opt, setValue);
-                    setActiveSection(null); 
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                    setActiveSection(null);
                   }}
                 >
                   <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
@@ -232,7 +260,8 @@ export default function ReviewScreen({ route, navigation }) {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.contentContainer}>
       <Text style={styles.title}>{targetName}</Text>
       
       {(noise || crowd || wifi || outlets || lighting) ? (
@@ -254,17 +283,30 @@ export default function ReviewScreen({ route, navigation }) {
       {renderAccordion('lighting', '💡 Lighting Conditions', lighting, setLighting, ['Dim', 'Normal', 'Bright'], route?.params?.lighting)}
 
       <TouchableOpacity 
-        style={styles.submitButton} 
+        activeOpacity={1}
+        onPressIn={animateButton} // Triggers the shrink
         onPress={handleSubmit}
         disabled={isSubmitting}
       >
-        {isSubmitting ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.submitButtonText}>Submit Live Update</Text>
-        )}
+        <Animated.View style={[styles.submitButton, { transform: [{ scale: scaleAnim }] }]}>
+          {isSubmitting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.submitButtonText}>Submit Live Update</Text>
+          )}
+        </Animated.View>
       </TouchableOpacity>
     </ScrollView>
+
+    <Animated.View 
+        style={[
+          styles.toastContainer, 
+          { transform: [{ translateY: toastAnim }] }
+        ]}
+      >
+        <Text style={styles.toastText}>✅ Update posted successfully!</Text>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -317,4 +359,7 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
   errorText: { fontSize: 16, color: colors.textLight, textAlign: 'center', marginBottom: 20 },
   retryButton: { backgroundColor: colors.primary, padding: 12, borderRadius: 8 },
   retryButtonText: { color: '#FFFFFF', fontWeight: 'bold' },
+
+  toastContainer: { position: 'absolute', top: 0, left: 20, right: 20, backgroundColor: '#10B981', padding: 16, borderRadius: 12, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 5 },
+  toastText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 },
 });

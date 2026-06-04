@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, 
+  ActivityIndicator
+ } from 'react-native';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useNavigation } from '@react-navigation/native';
@@ -47,7 +49,7 @@ export default function FeedScreen() {
 
     return hoursDifference >= 2; 
   };
-
+  
   const renderSpotCard = ({ item }) => {
     const stale = isDataStale(item.lastUpdated);
 
@@ -88,7 +90,7 @@ export default function FeedScreen() {
         </View>
 
         <TouchableOpacity 
-          style={styles.viewButton} 
+          style={styles.viewButton}
           onPress={() => navigation.navigate('Review', {
             name: item.name, 
             latitude: item.latitude || 46.5592, 

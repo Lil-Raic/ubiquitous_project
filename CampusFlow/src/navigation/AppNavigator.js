@@ -96,7 +96,7 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerBackButtonDisplayMode: 'minimal', animation: 'none' }}>
+      <Stack.Navigator screenOptions={{ headerBackButtonDisplayMode: 'minimal', animation: 'slide_from_right' }}>
         <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: true,headerTintColor: '#FFFFFF', headerStyle: { backgroundColor : colors.primary} }}/>
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
         <Stack.Screen 
