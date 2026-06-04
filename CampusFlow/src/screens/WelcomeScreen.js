@@ -1,4 +1,3 @@
-// src/screens/WelcomeScreen.js
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
@@ -6,7 +5,6 @@ import { colors } from '../theme/colors';
 export default function WelcomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
-      {/* Main Content */}
       <View style={styles.content}>
         <Text style={styles.title}>CampusFlow</Text>
         <Text style={styles.subtitle}>Your ultimate study companion at FERI.</Text>
@@ -15,10 +13,8 @@ export default function WelcomeScreen({ navigation }) {
         </Text>
       </View>
 
-      {/* Get Started Button */}
       <TouchableOpacity 
         style={styles.button} 
-        // This command replaces the welcome screen with your tabs so the user can't go "back" to the welcome screen
         onPress={() => navigation.replace('Login')} 
       >
         <Text style={styles.buttonText}>Get Started</Text>
@@ -30,7 +26,7 @@ export default function WelcomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary, // Make the whole screen FERI Blue
+    backgroundColor: colors.primary, 
     justifyContent: 'space-between',
     padding: 24,
   },
@@ -42,12 +38,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 42,
     fontWeight: 'bold',
-    color: colors.surface, // White text
+    color: colors.surface, 
     marginBottom: 12,
   },
   subtitle: {
     fontSize: 18,
-    color: '#E0E7FF', // Light blue/gray
+    color: '#E0E7FF', 
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -59,7 +55,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   button: {
-    backgroundColor: colors.surface, // White button
+    backgroundColor: colors.surface, 
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -71,7 +67,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   buttonText: {
-    color: colors.primary, // Blue text on white button
+    color: colors.primary,
     fontSize: 18,
     fontWeight: 'bold',
   },

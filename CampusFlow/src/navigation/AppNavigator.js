@@ -9,6 +9,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ThemeMode } from '../theme/ThemeMode';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import MapScreen from '../screens/MapScreen';

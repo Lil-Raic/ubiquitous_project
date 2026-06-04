@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView 
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { colors } from '../theme/colors';
+import { doc, getDoc, setDoc } from 'firebase/firestore'; 
+import { db } from '../config/firebase';
 
 export default function RegisterScreen({ navigation }) {
   const [username, setUsername] = useState('');
@@ -17,12 +19,25 @@ export default function RegisterScreen({ navigation }) {
     }
     
     if (password !== confirmPassword) {
-      Alert.alert("Erro", "As passwords introduzidas não são iguais.");
+      Alert.alert("Error", "The passwords are different.");
       return;
     }
 
     try {
+      const usernameRef = doc(db, 'usernames', username.toLowerCase());
+      const usernameDoc = await getDoc(usernameRef);
+
+      if (usernameDoc.exists()) {
+        Alert.alert("Error", "This username already exists.");
+        return;
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      await setDoc(usernameRef, {
+        uid: userCredential.user.uid,
+        createdAt: new Date().toISOString()
+      });
 
       await updateProfile(userCredential.user, {
         displayName: username
@@ -31,7 +46,11 @@ export default function RegisterScreen({ navigation }) {
       Alert.alert("Sucess", "Account created successfully!");
       navigation.goBack(); 
     } catch (error) {
+      if (error.code === 'auth/email-already-in-use') {
+        Alert.alert("Error", "This email is already being used.");
+      } else {
       Alert.alert("Register Error:", error.message);
+      }
     }
   };
 

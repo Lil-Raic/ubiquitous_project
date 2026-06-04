@@ -3,13 +3,11 @@ import { StyleSheet, View, Text, FlatList, TouchableOpacity, ActivityIndicator }
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useNavigation } from '@react-navigation/native';
-// 1. IMPORT THE ENGINE (Removed the old static colors import!)
 import { ThemeMode } from '../theme/ThemeMode';
 
 export default function FeedScreen() {
   const navigation = useNavigation();
   
-  // 2. GRAB LIVE COLORS & DARK MODE STATUS
   const { colors, isDarkMode } = useContext(ThemeMode);
   const styles = getStyles(colors, isDarkMode);
   
@@ -77,7 +75,6 @@ export default function FeedScreen() {
         <View style={styles.statsRow}>
           <View style={styles.statBadge}>
             <Text style={styles.statLabel}>🔊 Noise:</Text>
-            {/* 3. USING LIVE COLORS FOR STALE TEXT */}
             <Text style={[styles.statValue, stale && { color: colors.textLight, fontStyle: 'italic' }]}>
               {displayNoise}
             </Text>
@@ -113,7 +110,6 @@ export default function FeedScreen() {
   if (loading) {
     return (
       <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
-        {/* USING LIVE COLORS FOR THE SPINNER */}
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={{ marginTop: 10, color: colors.textLight }}>Connecting to the database...</Text>
       </View>
@@ -132,7 +128,6 @@ export default function FeedScreen() {
   );
 }
 
-// 4. WRAPPED YOUR STYLESHEET
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
   container: {
     flex: 1,
@@ -148,10 +143,10 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDarkMode ? 0.3 : 0.05, // Cleaned up the shadow for dark mode!
+    shadowOpacity: isDarkMode ? 0.3 : 0.05, 
     shadowRadius: 4,
     elevation: 2,
-    borderWidth: isDarkMode ? 1 : 0, // Added border for better visibility in dark mode
+    borderWidth: isDarkMode ? 1 : 0, 
     borderColor: colors.border,
   },
   cardHeader: {
@@ -205,7 +200,7 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
     alignItems: 'center',
   },
   viewButtonText: {
-    color: '#FFFFFF', // Keep this explicitly white so it stands out on the primary button
+    color: '#FFFFFF', 
     fontWeight: '600',
     fontSize: 14,
   },

@@ -1,10 +1,12 @@
 import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { auth } from '../config/firebase';
-import { signOut } from 'firebase/auth';
+import { auth, db } from '../config/firebase';
+import { deleteUser, signOut } from 'firebase/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { ThemeMode } from '../theme/ThemeMode';
+import { doc, deleteDoc } from 'firebase/firestore';
+
 
 export default function ProfileScreen() {
   const user = auth.currentUser;
@@ -21,8 +23,53 @@ export default function ProfileScreen() {
         routes: [{ name: 'Login' }],
       });
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível terminar sessão.");
+      Alert.alert("Error", "Unable log out.");
     }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? You won't be able to get it back.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+
+            try {
+              if (user.displayName) {
+                const cleanUsername = user.displayName.trim().toLowerCase();
+                const usernameRef = doc(db, 'usernames', cleanUsername);
+                await deleteDoc(usernameRef);
+              }
+
+              await deleteUser(user);
+              
+              await signOut(auth);
+
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+
+            } catch (error) {
+              if (error.code === 'auth/requires-recent-login') {
+                Alert.alert(
+                  "Security", 
+                  "For safety reasons, log out and log in again please to be able to proceed."
+                );
+              } else {
+                Alert.alert("Error", "It was not possible to delete this account: " + error.message);
+              }
+            }
+          } 
+        }
+      ]
+    );
   };
 
   return (
@@ -43,6 +90,14 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
           <Text style={styles.logoutText}>Log out</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.logoutButton, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#EF4444', marginTop: 40 }]} 
+          onPress={handleDeleteAccount}
+        >
+          <Ionicons name="trash-outline" size={22} color="#EF4444" />
+          <Text style={[styles.logoutText, { color: '#EF4444' }]}>Delete Account</Text>
         </TouchableOpacity>
       </View>
     </View>

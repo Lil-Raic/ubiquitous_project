@@ -101,7 +101,7 @@ export default function ReviewScreen({ route, navigation }) {
     setCheckingLocation(false);
   };
 
-  const saveToMemroy = (key,value, stateSetter) => {
+  const saveToMemory = (key,value, stateSetter) => {
     stateSetter(value);
     if (!draftMemory[targetName]) {
       draftMemory[targetName] = {}
@@ -181,7 +181,7 @@ export default function ReviewScreen({ route, navigation }) {
                   key={opt}
                   style={[styles.optionButton, isSelected && styles.optionButtonSelected]}
                   onPress={() => {
-                    setValue(opt);
+                    saveToMemory(key, opt, setValue);
                     setActiveSection(null); 
                   }}
                 >

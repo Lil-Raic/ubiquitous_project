@@ -106,18 +106,18 @@ export default function AdminScreen() {
               placeholderTextColor={colors.textLight}
               keyboardType="numeric" 
               value={newLat} 
-              onChangeText={setNewLat} 
+              onChangeText={(text) => setNewLat(text.replace(/[^0-9.-]/g, ''))}
             />
           </View>
           <View style={{ flex: 1, marginLeft: 8 }}>
-            <Text style={styles.inputLabel}>Longitude</Text>
+            <Text style={styles.inputLabel}>Longitude</Text>  
             <TextInput 
               style={styles.input} 
               placeholder="15.6427" 
               placeholderTextColor={colors.textLight}
               keyboardType="numeric" 
               value={newLon} 
-              onChangeText={setNewLon} 
+              onChangeText={(text) => setNewLon(text.replace(/[^0-9.-]/g, ''))}
             />
           </View>
         </View>
@@ -148,7 +148,7 @@ export default function AdminScreen() {
         data={spots}
         renderItem={renderAdminCard}
         keyExtractor={(item) => item.id}
-        ListHeaderComponent={renderAddForm}
+        ListHeaderComponent={renderAddForm()}
         contentContainerStyle={styles.listContainer}
         ListEmptyComponent={<Text style={styles.emptyText}>No locations in database.</Text>}
       />
