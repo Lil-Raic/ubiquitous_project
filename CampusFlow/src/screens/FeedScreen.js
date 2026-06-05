@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { StyleSheet, View, Text, FlatList, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { StyleSheet, View, Text, FlatList, ActivityIndicator, Image, Animated } from 'react-native';
+import * as Location from 'expo-location';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useNavigation } from '@react-navigation/native';
@@ -14,8 +15,63 @@ export default function FeedScreen() {
   
   const [spots, setSpots] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [weather, setWeather] = useState(null);
   
+  const dropdownHeight = useRef(new Animated.Value(0)).current;
+  const dropdownOpacity = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
+    const fetchDynamicWeather = async () => {
+      try {
+        let lat = 46.5592; 
+        let lon = 15.6427;
+
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          let location = await Location.getCurrentPositionAsync({});
+          lat = location.coords.latitude;
+          lon = location.coords.longitude;
+        }
+
+        const API_KEY = '686ef4a797c84f09ecca1d54eecd9944'; 
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`);
+        const data = await response.json();
+        
+        if (data.main) {
+          const condition = data.weather[0].main;
+
+          const isBad = ['Rain', 'Snow', 'Thunderstorm', 'Drizzle', 'Clouds'].includes(condition);
+
+          setWeather({
+            temp: Math.round(data.main.temp),
+            condition: condition,
+            icon: `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`,
+            city: data.name,
+            isBadWeather: isBad,
+            message: isBad 
+              ? `🌧️ Bad weather in ${data.name}. We recommend staying indoors today!` 
+              : `☀️ Nice weather in ${data.name}! Great day for outdoor spots.`
+          });
+
+          Animated.parallel([
+            Animated.timing(dropdownHeight, { toValue: 40, duration: 400, useNativeDriver: false }),
+            Animated.timing(dropdownOpacity, { toValue: 1, duration: 400, useNativeDriver: false })
+          ]).start();
+
+          setTimeout(() => {
+            Animated.parallel([
+              Animated.timing(dropdownHeight, { toValue: 0, duration: 400, useNativeDriver: false }),
+              Animated.timing(dropdownOpacity, { toValue: 0, duration: 400, useNativeDriver: false })
+            ]).start();
+          }, 5000);
+        }
+      } catch (error) {
+        console.log("Could not fetch weather data:", error);
+      }
+    };
+
+    fetchDynamicWeather();
+
     const spotsRef = collection(db, 'study_spots');
 
     const unsubscribe = onSnapshot(spotsRef, (snapshot) => {
@@ -49,6 +105,28 @@ export default function FeedScreen() {
     return hoursDifference >= 2; 
   };
 
+  const renderHeader = () => {
+    if (!weather) return null;
+    return (
+      <View style={{ marginBottom: 16 }}>
+        <View style={styles.weatherCard}>
+          <View>
+            <Text style={styles.weatherCity}>{weather.city} Area</Text>
+            <Text style={styles.weatherDesc}>{weather.condition} • {weather.temp}°C</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ fontSize: 24, marginRight: 8 }}>{weather.isBadWeather ? '☁️' : '☀️'}</Text>
+            <Image source={{ uri: weather.icon }} style={styles.weatherIcon} />
+          </View>
+        </View>
+
+        <Animated.View style={[styles.weatherDropdown, { height: dropdownHeight, opacity: dropdownOpacity }]}>
+          <Text style={styles.dropdownText}>{weather.message}</Text>
+        </Animated.View>
+      </View>
+    );
+  };
+
   const renderSpotCard = ({ item, index }) => {
     const stale = isDataStale(item.lastUpdated);
 
@@ -62,9 +140,24 @@ export default function FeedScreen() {
       (item.lastUpdated.toDate ? item.lastUpdated.toDate().toISOString() : item.lastUpdated) 
       : null;
 
+    let isRecommended = false;
+    if (weather) {
+      if (weather.isBadWeather && item.indoors) isRecommended = true;
+      if (!weather.isBadWeather && item.outdoors) isRecommended = true;
+    }
+
     return (
       <StaggeredCard index={index}>
-        <View style={styles.card}>
+        <View style={[styles.card, isRecommended && { borderColor: colors.primary, borderWidth: 2 }]}>
+          
+          {isRecommended && (
+            <View style={styles.recommendationBadge}>
+              <Text style={styles.recommendationText}>
+                {weather?.isBadWeather ? '☁️ Best for Ugly Days' : '☀️ Great for Sunny Days'}
+              </Text>
+            </View>
+          )}
+
           <View style={styles.cardHeader}>
             <Text style={styles.spotName}>{item.name}</Text>
             <Text style={[styles.statusTag, { color: item.status === 'Open' ? '#10B981' : '#EF4444' }]}>
@@ -102,7 +195,7 @@ export default function FeedScreen() {
                 wifi: displayWifi,
                 outlets: displayOutlets,
                 lighting: displayLighting,
-                mode: 'view' 
+                mode: 'view'
               })}
             >
               <Text style={styles.viewOnlyText}>View Details</Text>
@@ -147,6 +240,7 @@ export default function FeedScreen() {
         renderItem={renderSpotCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
+        ListHeaderComponent={renderHeader}
       />
     </View>
   );
@@ -160,6 +254,35 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
   listContainer: {
     padding: 16,
   },
+  weatherCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 2, 
+  },
+  weatherCity: { fontSize: 18, fontWeight: 'bold', color: '#FFFFFF', marginBottom: 4 },
+  weatherDesc: { fontSize: 15, color: '#E0F2FE', fontWeight: '500' },
+  weatherIcon: { width: 50, height: 50 },
+  weatherDropdown: {
+    backgroundColor: isDarkMode ? '#333333' : '#F1F5F9',
+    marginHorizontal: 10,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  dropdownText: { fontSize: 12, color: colors.textLight, fontStyle: 'italic', fontWeight: '600' },
+
   card: {
     backgroundColor: colors.surface,
     borderRadius: 12,
@@ -172,32 +295,24 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
     elevation: 2,
     borderWidth: isDarkMode ? 1 : 0, 
     borderColor: colors.border,
+    overflow: 'hidden',
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
+  recommendationBadge: {
+    backgroundColor: colors.background,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  spotName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  statusTag: {
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  spotZone: {
-    fontSize: 14,
-    color: colors.textLight,
-    marginBottom: 12,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
+  recommendationText: { fontSize: 12, fontWeight: '700', color: colors.primary },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  spotName: { fontSize: 18, fontWeight: 'bold', color: colors.text },
+  statusTag: { fontWeight: 'bold', fontSize: 14 },
+  spotZone: { fontSize: 14, color: colors.textLight, marginBottom: 12 },
+  statsRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
   statBadge: {
     backgroundColor: colors.background,
     borderWidth: 1,
@@ -208,30 +323,13 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
     flexDirection: 'row',
     gap: 4,
   },
-  statLabel: {
-    fontSize: 12,
-    color: colors.textLight,
-  },
-  statValue: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  viewButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  viewButtonText: {
-    color: '#FFFFFF', 
-    fontWeight: '600',
-    fontSize: 14,
-  },
+  statLabel: { fontSize: 12, color: colors.textLight },
+  statValue: { fontSize: 12, fontWeight: '600', color: colors.text },
+
   actionRow: { flexDirection: 'row', gap: 10, marginTop: 4 }, 
   actionButton: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center' }, 
   viewOnlyButton: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary }, 
-  viewOnlyText: { color: isDarkMode ? '#FFFFFF' : colors.primary , fontWeight: '700', fontSize: 14 }, 
+  viewOnlyText: { color: colors.primary, fontWeight: '700', fontSize: 14 }, 
   updateButton: { backgroundColor: colors.primary, borderWidth: 1.5, borderColor: colors.primary }, 
-  updateText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
+  updateText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 }, 
 });
