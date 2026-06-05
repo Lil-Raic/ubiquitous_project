@@ -33,7 +33,7 @@ export default function FeedScreen() {
           lon = location.coords.longitude;
         }
 
-        const API_KEY = '686ef4a797c84f09ecca1d54eecd9944'; 
+        const API_KEY = process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY; 
         const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`);
         const data = await response.json();
         
