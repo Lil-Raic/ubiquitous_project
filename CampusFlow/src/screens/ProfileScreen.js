@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import React, { useContext, useEffect } from 'react';
+import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
 import { auth, db } from '../config/firebase';
 import { deleteUser, signOut } from 'firebase/auth';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,17 @@ import { ThemeMode } from '../theme/ThemeMode';
 import { doc, deleteDoc } from 'firebase/firestore';
 
 import { BouncyButton } from '../theme/UiAnimations';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
+
+// 1. Tell the OS how to handle notifications (Show alert and play sound)
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function ProfileScreen() {
   const user = auth.currentUser;
@@ -15,6 +26,24 @@ export default function ProfileScreen() {
   
   const { colors, isDarkMode } = useContext(ThemeMode);
   const styles = getStyles(colors, isDarkMode);
+
+  // 2. Request Notification Permissions when screen loads
+  useEffect(() => {
+    async function requestPermissions() {
+      if (Device.isDevice) {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+          console.log('Permission for notifications was denied');
+        }
+      }
+    }
+    requestPermissions();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -49,7 +78,6 @@ export default function ProfileScreen() {
               }
 
               await deleteUser(user);
-              
               await signOut(auth);
 
               navigation.reset({
@@ -73,8 +101,25 @@ export default function ProfileScreen() {
     );
   };
 
+  // 3. The function that schedules the push notification
+  const triggerNotification = async () => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "🎓 FERI CampusFlow Alert!",
+        body: "The G-201 Computer Lab just got quieter. Great time to study!",
+        sound: true,
+      },
+      trigger: { seconds: 3 }, // Drops 3 seconds after clicking
+    });
+    Alert.alert("Alert Scheduled!", "Swipe up to go to your iPhone home screen RIGHT NOW to watch it drop down.");
+  };
+
   return (
-    <View style={styles.container}>
+    // Replaced the strict View with a ScrollView and used contentContainerStyle
+    <ScrollView 
+      contentContainerStyle={styles.scrollContainer} 
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.profileCard}>
         <Ionicons name="person-circle-outline" size={100} color={isDarkMode ? '#FFFFFF' : colors.primary} />
         
@@ -88,29 +133,36 @@ export default function ProfileScreen() {
           <Text style={styles.value}>{user?.email}</Text>
         </View>
         
+        <BouncyButton style={styles.notifyButton} onPress={triggerNotification}>
+          <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
+          <Text style={styles.notifyText}>Test Library Alert</Text>
+        </BouncyButton>
+        
         <BouncyButton style={styles.logoutButton} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={22} color="#FFFFFF" />
           <Text style={styles.logoutText}>Log out</Text>
         </BouncyButton>
 
         <BouncyButton 
-          style={[styles.logoutButton, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#EF4444', marginTop: 40 }]} 
+          style={[styles.logoutButton, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#EF4444', marginTop: 20 }]} 
           onPress={handleDeleteAccount}
         >
           <Ionicons name="trash-outline" size={22} color="#EF4444" />
           <Text style={[styles.logoutText, { color: '#EF4444' }]}>Delete Account</Text>
         </BouncyButton>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
-  container: {
-    flex: 1,
+  // Switched to flexGrow so it expands dynamically when scrolling
+  scrollContainer: {
+    flexGrow: 1,
     backgroundColor: colors.background,
     padding: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   profileCard: {
     backgroundColor: colors.surface,
@@ -145,13 +197,30 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
     marginTop: 5,
     fontWeight: '500',
   },
+  notifyButton: {
+    flexDirection: 'row',
+    backgroundColor: '#10B981', 
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    marginTop: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8, 
+    width: '100%', 
+  },
+  notifyText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   logoutButton: {
     flexDirection: 'row',
     backgroundColor: '#EF4444', 
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 10,
-    marginTop: 40,
+    marginTop: 20,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8, 

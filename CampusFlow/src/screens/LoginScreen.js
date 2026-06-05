@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert, useWindowDimensions, ScrollView } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { colors } from '../theme/colors';
@@ -8,6 +8,10 @@ import { BouncyButton } from '../theme/UiAnimations';
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // 1. Hook to get LIVE screen dimensions (updates automatically on phone rotation)
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -24,57 +28,69 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>CampusFlow</Text>
-        <Text style={styles.subtitle}>Find your perfect study space</Text>
+    // 2. ScrollView ensures the keyboard never blocks the inputs on small or landscape screens
+    <ScrollView 
+      contentContainerStyle={[styles.scrollContainer, { minHeight: height }]}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.container}>
+        
+        {/* 3. The card width adapts dynamically: 60% in landscape, 90% in portrait, capped at 450px for iPads */}
+        <View style={[styles.card, { width: isLandscape ? '60%' : '90%', maxWidth: 450 }]}>
+          <Text style={styles.title}>CampusFlow</Text>
+          <Text style={styles.subtitle}>Find your perfect study space</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor={colors.textLight}
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor={colors.textLight}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor={colors.textLight}
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          autoCapitalize="none"
-        />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor={colors.textLight}
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            autoCapitalize="none"
+          />
 
-        <BouncyButton style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Log In</Text>
-        </BouncyButton>
+          <BouncyButton style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Log In</Text>
+          </BouncyButton>
 
-        <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR</Text>
-          <View style={styles.dividerLine} />
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <BouncyButton 
+            style={styles.registerButtonOutline} 
+            onPress={() => navigation.navigate('Register')}
+          >
+            <Text style={styles.registerButtonTextOutline}>Create an Account</Text>
+          </BouncyButton>
         </View>
-
-        <BouncyButton 
-          style={styles.registerButtonOutline} 
-          onPress={() => navigation.navigate('Register')}
-        >
-          <Text style={styles.registerButtonTextOutline}>Create an Account</Text>
-        </BouncyButton>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,
     justifyContent: 'center',
+    alignItems: 'center', // Centers the card perfectly regardless of width
     padding: 20,
   },
   card: {
