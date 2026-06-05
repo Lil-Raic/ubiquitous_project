@@ -101,17 +101,21 @@ export default function ProfileScreen() {
     );
   };
 
-  // 3. The function that schedules the push notification
+  // 3. The function that schedules the push notification (Instant Fire)
   const triggerNotification = async () => {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "🎓 FERI CampusFlow Alert!",
-        body: "The G-201 Computer Lab just got quieter. Great time to study!",
-        sound: true,
-      },
-      trigger: { seconds: 3 }, // Drops 3 seconds after clicking
-    });
-    Alert.alert("Alert Scheduled!", "Swipe up to go to your iPhone home screen RIGHT NOW to watch it drop down.");
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "🎓 CampusFlow Alert!",
+          body: "The G-201 Computer Lab just got quieter. Great time to study!",
+          sound: true,
+        },
+        trigger: null, // 'null' bypasses the strict interval rules and fires instantly
+      });
+    } catch (error) {
+      Alert.alert("Notification Error", error.message);
+      console.log("Notification Error:", error);
+    }
   };
 
   return (
