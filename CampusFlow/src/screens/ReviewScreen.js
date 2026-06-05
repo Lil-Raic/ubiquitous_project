@@ -33,6 +33,8 @@ export default function ReviewScreen({ route, navigation }) {
   const lastUpdated = route?.params?.lastUpdated;
   const MAX_DISTANCE_METERS = 50;
 
+  const [viewMode, setViewMode] = useState(route?.params?.mode === 'view');
+
   const [locationValid, setLocationValid] = useState(false);
   const [checkingLocation, setCheckingLocation] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,9 +62,14 @@ export default function ReviewScreen({ route, navigation }) {
   }, [targetName]);
 
   useEffect(() => {
-    verifyLocation();
+    if (viewMode) {
+      setCheckingLocation(false);
+      setLocationValid(true);
+    } else {
+      verifyLocation();
+    }
     checkIfDataIsStale();
-  }, [targetName, lastUpdated]);
+  }, [targetName, lastUpdated, viewMode]);
 
   const checkIfDataIsStale = () => {
     if (lastUpdated) {
@@ -180,18 +187,20 @@ export default function ReviewScreen({ route, navigation }) {
               {displayValue}
             </Text>
           </View>
-          <LiftButton
-            style={styles.updateButtonSmall}
-            onPress={() => {
-              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-              setActiveSection(isActive ? null : key);
-            }}
-          >
-            <Text style={styles.updateButtonSmallText}>{isActive ? 'Cancel' : 'Update'}</Text>
-          </LiftButton>
+          {!viewMode && (
+            <LiftButton
+              style={styles.updateButtonSmall}
+              onPress={() => {
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                setActiveSection(isActive ? null : key);
+              }}
+            >
+              <Text style={styles.updateButtonSmallText}>{isActive ? 'Cancel' : 'Update'}</Text>
+            </LiftButton>
+          )}
         </View>
 
-        {isActive && (
+        {isActive && !viewMode && (
           <View style={styles.optionsRow}>
             {options.map((opt) => {
               const isSelected = currentValue === opt;
@@ -238,7 +247,7 @@ export default function ReviewScreen({ route, navigation }) {
     );
   }
 
-  if (!locationValid) {
+  if (!locationValid && !viewMode) {
     return (
       <View style={[styles.container, styles.center]}>
         <Text style={styles.errorIcon}>🚫</Text>
@@ -247,6 +256,13 @@ export default function ReviewScreen({ route, navigation }) {
         <BouncyButton style={styles.retryButton} onPress={verifyLocation}>
           <Text style={styles.retryButtonText}>Check Location Again</Text>
         </BouncyButton>
+
+        <LiftButton 
+          style={styles.viewFallbackButton} 
+          onPress={() => setViewMode(true)} 
+        >
+          <Text style={styles.viewFallbackText}>View Details Instead</Text>
+        </LiftButton>
       </View>
     );
   }
@@ -256,7 +272,9 @@ export default function ReviewScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <Text style={styles.title}>{targetName}</Text>
         
-        {(noise || crowd || wifi || outlets || lighting) ? (
+        {viewMode ? (
+          <Text style={styles.subtitle}>Viewing real-time campus data.</Text>
+        ) : (noise || crowd || wifi || outlets || lighting) ? (
           <Text style={[styles.subtitle, { color: colors.primary, fontWeight: 'bold' }]}>
             Drafting live update...
           </Text>
@@ -274,17 +292,19 @@ export default function ReviewScreen({ route, navigation }) {
         {renderAccordion('outlets', '🔌 Power Outlets', outlets, setOutlets, ['None', 'Few', 'Available'], route?.params?.outlets)}
         {renderAccordion('lighting', '💡 Lighting Conditions', lighting, setLighting, ['Dim', 'Normal', 'Bright'], route?.params?.lighting)}
 
-        <BouncyButton 
-          style={styles.submitButton}
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.submitButtonText}>Submit Live Update</Text>
-          )}
-        </BouncyButton>
+        {!viewMode && (
+          <BouncyButton 
+            style={styles.submitButton}
+            onPress={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.submitButtonText}>Submit Live Update</Text>
+            )}
+          </BouncyButton>
+        )}
       </ScrollView>
 
       <CustomToast visible={showToast} message="Update posted successfully!" />

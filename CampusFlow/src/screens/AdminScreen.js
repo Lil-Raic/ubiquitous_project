@@ -20,6 +20,9 @@ export default function AdminScreen() {
   const [newLat, setNewLat] = useState('');
   const [newLon, setNewLon] = useState('');
 
+  const [hasIndoors, setHasIndoors] = useState(true); 
+  const [hasOutdoors, setHasOutdoors] = useState(false);
+
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
@@ -51,6 +54,8 @@ export default function AdminScreen() {
         wifi: 'Unknown',
         outlets: 'Unknown',
         lighting: 'Unknown',
+        indoors: hasIndoors,
+        outdoors: hasOutdoors,
         lastUpdated: null 
       });
 
@@ -60,6 +65,7 @@ export default function AdminScreen() {
       setTimeout(() => setShowToast(false), 3000);
 
       setNewName(''); setNewLat(''); setNewLon('');
+      setHasIndoors(true); setHasOutdoors(false);
     } catch (error) {
       Alert.alert("Error", "Could not add building.");
       console.error(error);
@@ -130,6 +136,23 @@ export default function AdminScreen() {
           </View>
         </View>
         
+        <Text style={styles.inputLabel}>Environment</Text>
+        <View style={styles.row}>
+          <LiftButton 
+            style={[styles.reviewStyleButton, hasIndoors ? styles.activeButton : styles.inactiveButton, { marginRight: 5 }]} 
+            onPress={() => setHasIndoors(!hasIndoors)}
+          >
+            <Text style={hasIndoors ? styles.activeText : styles.inactiveText}>Indoors</Text>
+          </LiftButton> 
+          
+          <LiftButton 
+            style={[styles.reviewStyleButton, hasOutdoors ? styles.activeButton : styles.inactiveButton, { marginLeft: 5 }]} 
+            onPress={() => setHasOutdoors(!hasOutdoors)}
+          >
+            <Text style={hasOutdoors ? styles.activeText : styles.inactiveText}>Outdoors</Text>
+          </LiftButton> 
+        </View>
+
         <BouncyButton style={styles.addButton} onPress={handleAddSpot} disabled={isSubmitting}>
           {isSubmitting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.addButtonText}>+ Add to Database</Text>}
         </BouncyButton>
@@ -141,6 +164,9 @@ export default function AdminScreen() {
     <View style={styles.dbCard}>
       <View style={styles.dbCardInfo}>
         <Text style={styles.spotName}>{item.name}</Text>
+        <Text style={{fontSize: 12, color: colors.textLight, marginTop: 4}}>
+          {item.indoors ? ' Indoors ' : ''}{item.outdoors ? ' Outdoors' : ''}
+        </Text>
       </View>
       <LiftButton style={styles.deleteButton} onPress={() => handleDeleteSpot(item.id, item.name)}>
         <Text style={styles.deleteButtonText}>Delete</Text>
@@ -183,6 +209,11 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
     borderWidth: isDarkMode ? 1 : 0,
     borderColor: colors.border
   },
+  reviewStyleButton: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', borderWidth: 2 },
+  activeButton: { backgroundColor: colors.primary, borderColor: colors.primary }, 
+  inactiveButton: { backgroundColor: 'transparent', borderColor: colors.border }, 
+  activeText: { color: '#FFFFFF', fontWeight: '600', fontSize: 14 }, 
+  inactiveText: { color: colors.textLight, fontWeight: '600', fontSize: 14 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 16 },
   inputLabel: { fontSize: 13, fontWeight: '600', color: colors.textLight, marginBottom: 6, marginTop: 10 },
   input: { backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, padding: 14, borderRadius: 10, fontSize: 15, color: colors.text },

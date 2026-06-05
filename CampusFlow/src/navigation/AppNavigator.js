@@ -124,7 +124,7 @@ export default function AppNavigator() {
         <Stack.Screen 
           name="Review" 
           component={ReviewScreen} 
-          options={{ title: 'Update Location',
+          options={{ title: 'Location',
             headerTintColor: '#FFFFFF',
             headerStyle: { backgroundColor: colors.primary, height: UNIVERSAL_HEADER_HEIGHT }
            }} 

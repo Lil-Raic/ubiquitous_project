@@ -89,23 +89,43 @@ export default function FeedScreen() {
             </View>
           </View>
 
-          {/* 4. Swap to the LiftButton for a lightweight, premium interaction */}
-          <LiftButton 
-            style={styles.viewButton}
-            onPress={() => navigation.navigate('Review', {
-              name: item.name, 
-              latitude: item.latitude || 46.5592, 
-              longitude: item.longitude || 15.6427, 
-              lastUpdated: safeTimestamp, 
-              noise: displayNoise, 
-              crowd: displayCrowd,
-              wifi: displayWifi,
-              outlets: displayOutlets,
-              lighting: displayLighting
-            })}
-          >
-            <Text style={styles.viewButtonText}>View/Update Details</Text>
-          </LiftButton>
+          <View style={styles.actionRow}> 
+            <LiftButton 
+              style={[styles.actionButton, styles.viewOnlyButton]} 
+              onPress={() => navigation.navigate('Review', {
+                name: item.name, 
+                latitude: item.latitude || 46.5592, 
+                longitude: item.longitude || 15.6427, 
+                lastUpdated: safeTimestamp, 
+                noise: displayNoise, 
+                crowd: displayCrowd,
+                wifi: displayWifi,
+                outlets: displayOutlets,
+                lighting: displayLighting,
+                mode: 'view' 
+              })}
+            >
+              <Text style={styles.viewOnlyText}>View Details</Text>
+            </LiftButton>
+
+            <LiftButton 
+              style={[styles.actionButton, styles.updateButton]} 
+              onPress={() => navigation.navigate('Review', {
+                name: item.name, 
+                latitude: item.latitude || 46.5592, 
+                longitude: item.longitude || 15.6427, 
+                lastUpdated: safeTimestamp, 
+                noise: displayNoise, 
+                crowd: displayCrowd,
+                wifi: displayWifi,
+                outlets: displayOutlets,
+                lighting: displayLighting,
+                mode: 'edit' 
+              })}
+            >
+              <Text style={styles.updateText}>Update Stats</Text>
+            </LiftButton>
+          </View>
         </View>
       </StaggeredCard>
     );
@@ -208,4 +228,10 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
+  actionRow: { flexDirection: 'row', gap: 10, marginTop: 4 }, 
+  actionButton: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center' }, 
+  viewOnlyButton: { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary }, 
+  viewOnlyText: { color: isDarkMode ? '#FFFFFF' : colors.primary , fontWeight: '700', fontSize: 14 }, 
+  updateButton: { backgroundColor: colors.primary, borderWidth: 1.5, borderColor: colors.primary }, 
+  updateText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
 });

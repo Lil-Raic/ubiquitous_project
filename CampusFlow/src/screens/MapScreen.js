@@ -110,7 +110,8 @@ export default function MapScreen({ navigation }) {
                     crowd: displayCrowd,
                     wifi: displayWifi,
                     outlets: displayOutlets,
-                    lighting: displayLighting
+                    lighting: displayLighting,
+                    mode: 'view'
                   });
                 }}
               />
