@@ -7,6 +7,8 @@ import { getFirestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
+// Core configuration keys connecting the app to your specific Firebase cloud project
 const firebaseConfig = {
   apiKey: "AIzaSyDFVOM9BK6sEXSp07EjnqnREQ_ymRZ_NEI",
   authDomain: "campusflow-10758.firebaseapp.com",
@@ -17,6 +19,7 @@ const firebaseConfig = {
   measurementId: "G-TLMVHXJRBZ"
 };
 
+// Initializes the Firebase application services and exports them for use across your screens
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 export const auth = getAuth(app);

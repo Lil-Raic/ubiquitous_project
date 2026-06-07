@@ -8,12 +8,13 @@ import { db } from '../config/firebase';
 import { useIsFocused } from '@react-navigation/native';
 
 export default function MapScreen({ navigation }) {
+  // Manages screen visibility status to prevent background memory leaks, alongside local state for GPS and database items
   const isFocused = useIsFocused();
-
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-
   const [spots, setSpots] = useState([]);
+
+  // Requests device location permissions on load and establishes a real-time listener to fetch all study spots from Firebase
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -25,7 +26,6 @@ export default function MapScreen({ navigation }) {
       setLocation(currentLocation.coords);
     })();
 
-
     const spotsRef = collection(db, 'study_spots');
     const unsubscribe = onSnapshot(spotsRef, (snapshot) => {
       const spotsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -35,6 +35,7 @@ export default function MapScreen({ navigation }) {
     return () => unsubscribe();
   }, []);
 
+  // Evaluates database timestamps to determine if a location's crowd/noise data is older than 2 hours
   const isDataStale = (lastUpdated) => {
     if (!lastUpdated) return true;
     let updateTime;
@@ -51,6 +52,7 @@ export default function MapScreen({ navigation }) {
     return hoursDifference >= 2; 
   };
 
+  // Displays a loading indicator while waiting for the device's GPS hardware to return coordinates
   if (!location && !errorMsg) {
     return (
       <View style={styles.centerContainer}>
@@ -60,6 +62,7 @@ export default function MapScreen({ navigation }) {
     );
   }
 
+  // Renders the interactive map natively, plotting database markers and formatting their payloads before navigating to the Review screen
   return (
     <View style={styles.container}>
       {errorMsg ? (
@@ -124,6 +127,7 @@ export default function MapScreen({ navigation }) {
   );
 }
 
+// Basic structural styling ensuring the map takes up the full screen height and width
 const styles = StyleSheet.create({
   container: {
     flex: 1,

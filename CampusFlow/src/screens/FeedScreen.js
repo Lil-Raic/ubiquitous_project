@@ -9,17 +9,19 @@ import { LiftButton, StaggeredCard } from '../theme/UiAnimations';
 
 export default function FeedScreen() {
   const navigation = useNavigation();
-  
   const { colors, isDarkMode } = useContext(ThemeMode);
   const styles = getStyles(colors, isDarkMode);
   
+  // State variables handling UI rendering, loading screens, and external data
   const [spots, setSpots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [weather, setWeather] = useState(null);
   
+  // Animation hooks for the expanding and retracting weather recommendation banner
   const dropdownHeight = useRef(new Animated.Value(0)).current;
   const dropdownOpacity = useRef(new Animated.Value(0)).current;
 
+  // Primary effect hook that requests GPS permissions, fetches API weather data, and syncs Firebase study spots
   useEffect(() => {
     const fetchDynamicWeather = async () => {
       try {
@@ -39,7 +41,6 @@ export default function FeedScreen() {
         
         if (data.main) {
           const condition = data.weather[0].main;
-
           const isBad = ['Rain', 'Snow', 'Thunderstorm', 'Drizzle', 'Clouds'].includes(condition);
 
           setWeather({
@@ -89,6 +90,7 @@ export default function FeedScreen() {
     }
   }, []);
 
+  // Helper function verifying if a study spot's data is older than 2 hours to reset stats to "Unknown"
   const isDataStale = (lastUpdated) => {
     if (!lastUpdated) return true;
     let updateTime;
@@ -105,6 +107,7 @@ export default function FeedScreen() {
     return hoursDifference >= 2; 
   };
 
+  // Header component displaying live weather data and the animated dropdown notification
   const renderHeader = () => {
     if (!weather) return null;
     return (
@@ -127,6 +130,7 @@ export default function FeedScreen() {
     );
   };
 
+  // Renders the visual card for each individual study spot, including logic to visually highlight recommended locations based on weather
   const renderSpotCard = ({ item, index }) => {
     const stale = isDataStale(item.lastUpdated);
 
@@ -224,6 +228,7 @@ export default function FeedScreen() {
     );
   };
 
+  // Main UI returns either a loading spinner or the FlatList containing the feed of study spots
   if (loading) {
     return (
       <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
@@ -246,6 +251,7 @@ export default function FeedScreen() {
   );
 }
 
+// Styling definitions linking UI elements to the central light/dark theme tokens
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
   container: {
     flex: 1,

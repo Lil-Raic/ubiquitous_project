@@ -6,13 +6,13 @@ import { colors } from '../theme/colors';
 import { BouncyButton } from '../theme/UiAnimations';
 
 export default function LoginScreen({ navigation }) {
+  // Local state for user inputs and screen dimensions to adapt the layout for landscape or tablet viewing
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  // 1. Hook to get LIVE screen dimensions (updates automatically on phone rotation)
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
 
+  // Validates credentials and processes the Firebase login request before routing to the main feed
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Alert", "Fill both the email and password boxes.");
@@ -27,15 +27,14 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
+  // UI layout utilizing a ScrollView to protect inputs from the keyboard and a fluid container for responsiveness
   return (
-    // 2. ScrollView ensures the keyboard never blocks the inputs on small or landscape screens
     <ScrollView 
       contentContainerStyle={[styles.scrollContainer, { minHeight: height }]}
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.container}>
         
-        {/* 3. The card width adapts dynamically: 60% in landscape, 90% in portrait, capped at 450px for iPads */}
         <View style={[styles.card, { width: isLandscape ? '60%' : '90%', maxWidth: 450 }]}>
           <Text style={styles.title}>CampusFlow</Text>
           <Text style={styles.subtitle}>Find your perfect study space</Text>
@@ -82,6 +81,7 @@ export default function LoginScreen({ navigation }) {
   );
 }
 
+// Visual styling rules defining spacing, typography, and card geometry
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     justifyContent: 'center',
-    alignItems: 'center', // Centers the card perfectly regardless of width
+    alignItems: 'center',
     padding: 20,
   },
   card: {

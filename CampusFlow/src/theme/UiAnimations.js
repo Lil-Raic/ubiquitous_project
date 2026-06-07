@@ -3,8 +3,7 @@ import { Animated, TouchableOpacity, StyleSheet, Text } from 'react-native';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
-// BOUNCY BUTTON 
-
+// Shrinks the button slightly when pressed down to simulate physical resistance and depth
 export const BouncyButton = ({ onPress, style, children, disabled }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -25,8 +24,7 @@ export const BouncyButton = ({ onPress, style, children, disabled }) => {
   );
 };
 
-// LIFT BUTTON 
-
+// Expands the button outward when pressed, typically used for smaller icon buttons to highlight interaction
 export const LiftButton = ({ onPress, style, children, disabled }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -47,8 +45,7 @@ export const LiftButton = ({ onPress, style, children, disabled }) => {
   );
 };
 
-// TOAST 
-
+// Displays a temporary notification banner that slides down from the top of the screen and auto-dismisses after 2 seconds
 export const CustomToast = ({ visible, message }) => {
   const translateY = useRef(new Animated.Value(-100)).current;
 
@@ -71,7 +68,7 @@ export const CustomToast = ({ visible, message }) => {
   );
 };
 
-// STAGGERED
+// Creates a cascading "waterfall" entrance effect for list items by delaying their fade-in and slide-up animations based on their list index
 export const StaggeredCard = ({ children, index }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current; // Starts 50px pushed down
@@ -90,6 +87,7 @@ export const StaggeredCard = ({ children, index }) => {
   );
 };
 
+// Styling rules defining the layout, color, and drop shadow for the temporary toast notification banner
 const styles = StyleSheet.create({
   toastContainer: {
     position: 'absolute', top: 0, left: 20, right: 20, zIndex: 999,
@@ -99,4 +97,3 @@ const styles = StyleSheet.create({
   },
   toastText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 16 },
 });
-

@@ -1,4 +1,4 @@
-// src/theme/colors.js
+// Centralized color palette defining the core branding, backgrounds, and text shades used across the application to maintain UI consistency
 export const colors = {
   primary: '#0055A4',    
   background: '#F4F4F9', 

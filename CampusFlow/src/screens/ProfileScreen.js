@@ -11,7 +11,7 @@ import { BouncyButton } from '../theme/UiAnimations';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 
-// 1. Tell the OS how to handle notifications (Show alert and play sound)
+// Configures the default behavior for push notifications, telling the device OS to display banners and play sounds even if the app is actively open
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -21,13 +21,13 @@ Notifications.setNotificationHandler({
 });
 
 export default function ProfileScreen() {
+  // Initializes navigation, grabs the current Firebase user profile, and applies the global theme settings
   const user = auth.currentUser;
   const navigation = useNavigation();
-  
   const { colors, isDarkMode } = useContext(ThemeMode);
   const styles = getStyles(colors, isDarkMode);
 
-  // 2. Request Notification Permissions when screen loads
+  // Automatically prompts the user for OS-level permission to send push notifications when this screen loads
   useEffect(() => {
     async function requestPermissions() {
       if (Device.isDevice) {
@@ -45,6 +45,7 @@ export default function ProfileScreen() {
     requestPermissions();
   }, []);
 
+  // Safely severs the Firebase authentication session and forces the user back to the primary login screen
   const handleLogout = async () => {
     try {
       await signOut(auth); 
@@ -57,6 +58,7 @@ export default function ProfileScreen() {
     }
   };
 
+  // Triggers a confirmation dialog before permanently purging the user's account and associated database records from Firebase
   const handleDeleteAccount = () => {
     Alert.alert(
       "Delete Account",
@@ -101,7 +103,7 @@ export default function ProfileScreen() {
     );
   };
 
-  // 3. The function that schedules the push notification (Instant Fire)
+  // Executes a local push notification instantly by bypassing interval rules, serving as a hardware test for the Expo notifications library
   const triggerNotification = async () => {
     try {
       await Notifications.scheduleNotificationAsync({
@@ -110,7 +112,7 @@ export default function ProfileScreen() {
           body: "Notifications are working! This is a test alert to confirm you will receive important updates about your study spaces.",
           sound: true,
         },
-        trigger: null, // 'null' bypasses the strict interval rules and fires instantly
+        trigger: null, 
       });
     } catch (error) {
       Alert.alert("Notification Error", error.message);
@@ -118,8 +120,8 @@ export default function ProfileScreen() {
     }
   };
 
+  // Renders the user interface wrapped in a flexible scroll container to prevent clipping on smaller devices
   return (
-    // Replaced the strict View with a ScrollView and used contentContainerStyle
     <ScrollView 
       contentContainerStyle={styles.scrollContainer} 
       showsVerticalScrollIndicator={false}
@@ -159,8 +161,8 @@ export default function ProfileScreen() {
   );
 }
 
+// Maps styling attributes and structural geometry dynamically based on the active color scheme
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
-  // Switched to flexGrow so it expands dynamically when scrolling
   scrollContainer: {
     flexGrow: 1,
     backgroundColor: colors.background,

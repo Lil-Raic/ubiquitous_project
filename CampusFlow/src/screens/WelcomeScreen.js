@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 import { BouncyButton } from '../theme/UiAnimations';
 
+// Renders the initial landing screen, introducing the app's purpose and providing a primary call-to-action button to enter the login flow
 export default function WelcomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
@@ -24,6 +25,7 @@ export default function WelcomeScreen({ navigation }) {
   );
 }
 
+// Visual styling for the welcome screen, utilizing the primary brand color for the background and contrasting surface colors for text and interactive elements
 const styles = StyleSheet.create({
   container: {
     flex: 1,

@@ -6,6 +6,7 @@ import { db } from '../config/firebase';
 import { ThemeMode } from '../theme/ThemeMode';
 import { BouncyButton, LiftButton, CustomToast } from '../theme/UiAnimations';
 
+// Uses the Haversine formula to calculate the exact straight-line distance in meters between the user's GPS coordinates and the building's fixed coordinates
 const getDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371e3; 
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -17,13 +18,16 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
   return R * c; 
 };
 
+// Enables smooth expanding/collapsing layout animations specifically for Android devices
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+// Temporary in-memory cache to save the user's drafted ratings if they accidentally close the screen before submitting
 const draftMemory = {};
 
 export default function ReviewScreen({ route, navigation }) {
+  // Grabs the specific building details passed from the Feed or Map screen and initializes the UI theme
   const { colors, isDarkMode } = useContext(ThemeMode);
   const styles = getStyles(colors, isDarkMode);
 
@@ -33,13 +37,12 @@ export default function ReviewScreen({ route, navigation }) {
   const lastUpdated = route?.params?.lastUpdated;
   const MAX_DISTANCE_METERS = 50;
 
+  // State managers handling view permissions, GPS verification, loading spinners, and the 5 rating categories
   const [viewMode, setViewMode] = useState(route?.params?.mode === 'view');
-
   const [locationValid, setLocationValid] = useState(false);
   const [checkingLocation, setCheckingLocation] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStale, setIsStale] = useState(false);
-  
   const [activeSection, setActiveSection] = useState(null);
 
   const [noise, setNoise] = useState(null);
@@ -47,9 +50,9 @@ export default function ReviewScreen({ route, navigation }) {
   const [wifi, setWifi] = useState(null);
   const [outlets, setOutlets] = useState(null);
   const [lighting, setLighting] = useState(null);
-
   const [showToast, setShowToast] = useState(false);
 
+  // Checks the memory cache when the screen loads to see if the user previously started rating this specific building
   useEffect(() => {
     if (targetName) {
       setNoise(draftMemory[targetName]?.noise || null);
@@ -61,6 +64,7 @@ export default function ReviewScreen({ route, navigation }) {
     }
   }, [targetName]);
 
+  // Triggers the GPS check if the user intends to edit, otherwise skips directly to viewing the data
   useEffect(() => {
     if (viewMode) {
       setCheckingLocation(false);
@@ -71,6 +75,7 @@ export default function ReviewScreen({ route, navigation }) {
     checkIfDataIsStale();
   }, [targetName, lastUpdated, viewMode]);
 
+  // Validates if the Firebase data is older than 2 hours to reset the displayed values to "Unknown"
   const checkIfDataIsStale = () => {
     if (lastUpdated) {
       let updateTime;
@@ -95,6 +100,7 @@ export default function ReviewScreen({ route, navigation }) {
     }
   }
 
+  // Pings the device's GPS hardware and calculates the distance to prevent remote/fake ratings
   const verifyLocation = async () => {
     setCheckingLocation(true);
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -115,6 +121,7 @@ export default function ReviewScreen({ route, navigation }) {
     setCheckingLocation(false);
   };
 
+  // Saves a selected rating value into both the active screen state and the background memory cache
   const saveToMemory = (key,value, stateSetter) => {
     stateSetter(value);
     if (!draftMemory[targetName]) {
@@ -123,6 +130,7 @@ export default function ReviewScreen({ route, navigation }) {
     draftMemory[targetName][key] = value;
   };
 
+  // Compiles the drafted ratings, locates the exact building document in Firebase, and pushes the live update
   const handleSubmit = async () => {
     if (!noise && !crowd && !wifi && !outlets && !lighting) {
       Alert.alert("Nothing to update", "Please update at least one condition before submitting.");
@@ -174,6 +182,7 @@ export default function ReviewScreen({ route, navigation }) {
     setIsSubmitting(false);
   };
 
+  // Helper component that generates an expandable row for each rating category, hiding the options in "view" mode
   const renderAccordion = (key, label, currentValue, setValue, options, paramValue) => {
     const isActive = activeSection === key;
     const displayValue = currentValue ? currentValue : (isStale ? "Unknown" : (paramValue || "Unknown"));
@@ -226,6 +235,7 @@ export default function ReviewScreen({ route, navigation }) {
     );
   };
 
+  // Fallback UI screens for missing data, pending GPS calculations, or failed proximity checks
   if (!targetName || !targetLat || !targetLon) {
     return (
       <View style={[styles.container, styles.center]}>
@@ -267,6 +277,7 @@ export default function ReviewScreen({ route, navigation }) {
     );
   }
 
+  // The main interactive layout rendering the 5 category accordions and the submission button
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.contentContainer}>
@@ -312,6 +323,7 @@ export default function ReviewScreen({ route, navigation }) {
   );
 }
 
+// Maps styling attributes and structural geometry dynamically based on the active color scheme
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   contentContainer: { padding: 20, paddingBottom: 150 }, 

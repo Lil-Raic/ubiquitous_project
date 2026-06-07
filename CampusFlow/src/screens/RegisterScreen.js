@@ -8,11 +8,13 @@ import { db } from '../config/firebase';
 import { BouncyButton } from '../theme/UiAnimations';
 
 export default function RegisterScreen({ navigation }) {
+  // Manages the local state for all user registration inputs
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  // Validates form data, checks for duplicate usernames in Firestore, and creates a new user profile via Firebase Auth
   const handleRegister = async () => {
     if (!username || !email || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill all of the boxes.");
@@ -32,7 +34,7 @@ export default function RegisterScreen({ navigation }) {
         Alert.alert("Error", "This username already exists.");
         return;
       }
-//123456666666666
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
       await setDoc(usernameRef, {
@@ -55,6 +57,7 @@ export default function RegisterScreen({ navigation }) {
     }
   };
 
+  // Renders the registration form utilizing a ScrollView to prevent keyboard overlap on smaller devices
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
@@ -111,6 +114,7 @@ export default function RegisterScreen({ navigation }) {
   );
 }
 
+// Global styling properties for typography, inputs, and layout structuring
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,

@@ -24,6 +24,7 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 
+// Renders the interactive buttons (theme toggle and profile access) displayed in the top right corner of the app's header
 function HeaderRightActions() {
   const navigation = useNavigation();
   const { isDarkMode, toggleTheme } = useContext(ThemeMode); 
@@ -47,6 +48,7 @@ function TabNavigator() {
   const insets = useSafeAreaInsets();
   const UNIVERSAL_HEADER_HEIGHT = insets.top + 55;
 
+  // Listens to Firebase authentication state to determine if the active user should have access to the hidden Admin dashboard
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user && user.email === 'fabio@admin.si') {
@@ -58,6 +60,7 @@ function TabNavigator() {
     return () => unsubscribe();
   }, []);
 
+  // Defines the bottom navigation tabs (Feed, Map, Admin) with custom animated buttons and dynamic theme coloring
   return (
    <Tab.Navigator
       screenOptions={{
@@ -96,6 +99,7 @@ function TabNavigator() {
   );
 }
 
+// Sets up the overarching navigation stack, managing the transitions between public screens (Login) and authenticated screens (Tabs/Reviews)
 export default function AppNavigator() {
   const { colors } = useContext(ThemeMode);
   const insets = useSafeAreaInsets();

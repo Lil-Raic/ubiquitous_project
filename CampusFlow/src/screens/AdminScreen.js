@@ -12,6 +12,7 @@ export default function AdminScreen() {
   const { colors, isDarkMode } = useContext(ThemeMode);
   const styles = getStyles(colors, isDarkMode);
 
+  // Local state management for database items, loading status, form inputs, and UI notifications
   const [spots, setSpots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,6 +27,7 @@ export default function AdminScreen() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  // Establishes a real-time connection to Firebase to fetch and sync study spots automatically
   useEffect(() => {
     const spotsRef = collection(db, 'study_spots');
     const unsubscribe = onSnapshot(spotsRef, (snapshot) => {
@@ -36,6 +38,7 @@ export default function AdminScreen() {
     return () => unsubscribe();
   }, []);
 
+  // Validates form inputs and pushes a new location to the database with default "Unknown" baseline ratings
   const handleAddSpot = async () => {
     if (!newName || !newLat || !newLon) {
       Alert.alert("Missing Info", "Please fill out all fields to add a building.");
@@ -73,6 +76,7 @@ export default function AdminScreen() {
     setIsSubmitting(false);
   };
 
+  // Prompts for confirmation before permanently removing a specific location from the database
   const handleDeleteSpot = (id, name) => {
     Alert.alert(
       "Delete Building?",
@@ -94,6 +98,7 @@ export default function AdminScreen() {
     );
   };
 
+  // Renders the data-entry form for administrators to input new building coordinates and environments
   const renderAddForm = () => (
     <View>
       <Text style={styles.mainTitle}>Developer Dashboard</Text>
@@ -160,6 +165,7 @@ export default function AdminScreen() {
     </View>
   );
 
+  // Renders individual location rows in the database list with a corresponding delete action
   const renderAdminCard = ({ item }) => (
     <View style={styles.dbCard}>
       <View style={styles.dbCardInfo}>
@@ -176,6 +182,7 @@ export default function AdminScreen() {
 
   if (loading) return <ActivityIndicator style={{ flex: 1, backgroundColor: colors.background }} size="large" color={colors.primary} />;
 
+  // Main layout utilizing a FlatList for performance, wrapped to avoid keyboard overlap during data entry
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
       <FlatList
@@ -192,6 +199,7 @@ export default function AdminScreen() {
   );
 }
 
+// Dynamic styling configuration adapting to the current light/dark theme properties
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   listContainer: { padding: 16, paddingBottom: 40 },
