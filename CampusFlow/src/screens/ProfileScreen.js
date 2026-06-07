@@ -107,7 +107,7 @@ export default function ProfileScreen() {
       await Notifications.scheduleNotificationAsync({
         content: {
           title: "🎓 CampusFlow Alert!",
-          body: "The G-201 Computer Lab just got quieter. Great time to study!",
+          body: "Notifications are working! This is a test alert to confirm you will receive important updates about your study spaces.",
           sound: true,
         },
         trigger: null, // 'null' bypasses the strict interval rules and fires instantly
@@ -139,7 +139,7 @@ export default function ProfileScreen() {
         
         <BouncyButton style={styles.notifyButton} onPress={triggerNotification}>
           <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
-          <Text style={styles.notifyText}>Test Library Alert</Text>
+          <Text style={styles.notifyText}>Enable Notification</Text>
         </BouncyButton>
         
         <BouncyButton style={styles.logoutButton} onPress={handleLogout}>
