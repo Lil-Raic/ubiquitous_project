@@ -1,37 +1,56 @@
-// src/screens/MapScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, ActivityIndicator, Alert } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { colors } from '../theme/colors';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { useIsFocused } from '@react-navigation/native';
 
-// Hardcoded study spots around the FERI Maribor campus
-const STUDY_SPOTS = [
-  { id: '1', title: 'FERI Library', description: 'Quiet study zone', latitude: 46.5622, longitude: 15.6380 },
-  { id: '2', title: 'Campus Cafe', description: 'Good for group work', latitude: 46.5615, longitude: 15.6392 },
-  { id: '3', title: 'G-201 Computer Lab', description: 'High-performance PCs', latitude: 46.5628, longitude: 15.6375 },
-];
+export default function MapScreen({ navigation }) {
+  const isFocused = useIsFocused();
 
-export default function MapScreen() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
 
+  const [spots, setSpots] = useState([]);
   useEffect(() => {
     (async () => {
-      // 1. Request GPS permissions from the user
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
         return;
       }
-
-      // 2. Get the user's current location
       let currentLocation = await Location.getCurrentPositionAsync({});
       setLocation(currentLocation.coords);
     })();
+
+
+    const spotsRef = collection(db, 'study_spots');
+    const unsubscribe = onSnapshot(spotsRef, (snapshot) => {
+      const spotsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setSpots(spotsList);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  // Show a loading spinner while waiting for the GPS
+  const isDataStale = (lastUpdated) => {
+    if (!lastUpdated) return true;
+    let updateTime;
+    
+    if (lastUpdated.toDate) {
+      updateTime = lastUpdated.toDate();
+    } else if (lastUpdated.seconds) {
+      updateTime = new Date(lastUpdated.seconds * 1000);
+    } else {
+      updateTime = new Date(lastUpdated);
+    } 
+    const hoursDifference = Math.abs(new Date() - updateTime) / 36e5;
+
+    return hoursDifference >= 2; 
+  };
+
   if (!location && !errorMsg) {
     return (
       <View style={styles.centerContainer}>
@@ -46,27 +65,60 @@ export default function MapScreen() {
       {errorMsg ? (
         <Text style={styles.errorText}>{errorMsg}</Text>
       ) : (
+        isFocused ? (
         <MapView
           style={styles.map}
-          showsUserLocation={true} // Displays the blue dot for the user
+          showsUserLocation={true} 
+          zoomControlEnabled={true}
           initialRegion={{
             latitude: location ? location.latitude : 46.5622,
             longitude: location ? location.longitude : 15.6380,
-            latitudeDelta: 0.005, // Controls the zoom level
+            latitudeDelta: 0.005, 
             longitudeDelta: 0.005,
           }}
         >
-          {/* Loop through our study spots and place pins on the map */}
-          {STUDY_SPOTS.map((spot) => (
-            <Marker
-              key={spot.id}
-              coordinate={{ latitude: spot.latitude, longitude: spot.longitude }}
-              title={spot.title}
-              description={spot.description}
-              pinColor={colors.primary}
-            />
-          ))}
+          {spots.map((spot) => {
+            const stale = isDataStale(spot.lastUpdated);
+
+            const displayNoise = stale ? "Unknown" : (spot.noise || "Unknown");
+            const displayCrowd = stale ? "Unknown" : (spot.crowd || "Unknown");
+            const displayWifi = stale ? "Unknown" : (spot.wifi || "Unknown");
+            const displayOutlets = stale ? "Unknown" : (spot.outlets || "Unknown");
+            const displayLighting = stale ? "Unknown" : (spot.lighting || "Unknown");
+
+            const safeTimestamp = spot.lastUpdated ? 
+              (spot.lastUpdated.toDate ? spot.lastUpdated.toDate().toISOString() : spot.lastUpdated) 
+              : null;
+
+            return (
+              <Marker
+                key={spot.id}
+                coordinate={{ 
+                  latitude: parseFloat(spot.latitude), 
+                  longitude: parseFloat(spot.longitude)
+                }}
+                title={spot.name}
+                description="Tap here to view reviews"
+                pinColor={colors.primary}
+                onCalloutPress={() => {
+                  navigation.navigate('Review', {
+                    name: spot.name,
+                    latitude: parseFloat(spot.latitude),
+                    longitude: parseFloat(spot.longitude),
+                    lastUpdated: safeTimestamp,
+                    noise: displayNoise,
+                    crowd: displayCrowd,
+                    wifi: displayWifi,
+                    outlets: displayOutlets,
+                    lighting: displayLighting,
+                    mode: 'view'
+                  });
+                }}
+              />
+            );
+          })}
         </MapView>
+        ) : null
       )}
     </View>
   );

@@ -1,45 +1,134 @@
-// src/navigation/AppNavigator.js
-import React from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { Alert, TouchableOpacity, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { signOut } from 'firebase/auth';
+import { auth } from '../config/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { ThemeMode } from '../theme/ThemeMode';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LiftButton } from '../theme/UiAnimations'
 
-// Import all screens
 import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import MapScreen from '../screens/MapScreen';
 import FeedScreen from '../screens/FeedScreen';
 import ReviewScreen from '../screens/ReviewScreen';
-import { colors } from '../theme/colors';
+import RegisterScreen from '../screens/RegisterScreen';
+import ProfileScreen from '../screens/ProfileScreen'; 
+import AdminScreen from '../screens/AdminScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-function TabNavigator() {
+
+function HeaderRightActions() {
+  const navigation = useNavigation();
+  const { isDarkMode, toggleTheme } = useContext(ThemeMode); 
+
   return (
-    <Tab.Navigator
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
+      <LiftButton onPress={toggleTheme} style={{ marginRight: 20 }}>
+        <Ionicons name={isDarkMode ? "moon" : "sunny"} size={26} color="#FFFFFF" />
+      </LiftButton>
+      <LiftButton onPress={() => navigation.navigate('Profile')}>
+        <Ionicons name="person-circle-outline" size={32} color="#FFFFFF" />
+      </LiftButton>
+    </View>
+  );
+}
+
+function TabNavigator() {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { colors, isDarkMode } = useContext(ThemeMode);
+
+  const insets = useSafeAreaInsets();
+  const UNIVERSAL_HEADER_HEIGHT = insets.top + 55;
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && user.email === 'fabio@admin.si') {
+        setIsAdmin(true); 
+      } else {
+        setIsAdmin(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  return (
+   <Tab.Navigator
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: isDarkMode ? '#FFFFFF' : colors.primary, 
         tabBarInactiveTintColor: colors.textLight,
-        headerStyle: { backgroundColor: colors.primary },
-        headerTintColor: colors.surface,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        headerStyle: { backgroundColor: colors.primary, height: UNIVERSAL_HEADER_HEIGHT },
+        headerTintColor: '#FFFFFF', 
+        headerRight: () => <HeaderRightActions />, 
+
+        tabBarButton: (props) => (
+          <LiftButton style={props.style} onPress={props.onPress}>
+            {props.children}
+          </LiftButton>
+        )
       }}
     >
-      <Tab.Screen name="Feed" component={FeedScreen} options={{ title: 'Study Hub' }} />
-      <Tab.Screen name="Map" component={MapScreen} options={{ title: 'Study Spots Map' }} />
-      {/* 2. ADD THE REVIEW SCREEN TAB */}
-      <Tab.Screen name="Review" component={ReviewScreen} options={{ title: 'Update Spot' }} />
-      <Tab.Screen name="Login" component={LoginScreen} options={{ title: 'Profile' }} />
+     <Tab.Screen 
+        name="Feed" 
+        component={FeedScreen} 
+        options={{ title: 'Study Hub', tabBarIcon: ({ color, size }) => (<Ionicons name="home-outline" size={size} color={color} />) }} 
+      />
+      <Tab.Screen 
+        name="Map" 
+        component={MapScreen} 
+        options={{ title: 'Map', tabBarIcon: ({ color, size }) => (<Ionicons name="map-outline" size={size} color={color} />) }} 
+      />
+      {isAdmin && (
+        <Tab.Screen 
+          name="Admin Dashboard" 
+          component={AdminScreen} 
+          options={{ title: 'Admin', tabBarIcon: ({ color, size }) => (<MaterialCommunityIcons name="incognito" size={size} color={color} />) }} 
+        />
+      )}
     </Tab.Navigator>
   );
 }
 
 export default function AppNavigator() {
+  const { colors } = useContext(ThemeMode);
+  const insets = useSafeAreaInsets();
+  const UNIVERSAL_HEADER_HEIGHT = insets.top + 55;
+
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        <Stack.Screen name="MainTabs" component={TabNavigator} />
+      <Stack.Navigator screenOptions={{ headerBackButtonDisplayMode: 'minimal', animation: 'slide_from_right' }}>
+        <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: true,headerTintColor: '#FFFFFF', headerStyle: { backgroundColor : colors.primary} }}/>
+        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
+        <Stack.Screen 
+          name="Register" 
+          component={RegisterScreen} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="Profile" 
+          component={ProfileScreen} 
+          options={{ title: 'Profile',
+            headerTintColor: '#FFFFFF',
+            headerStyle: { backgroundColor: colors.primary, height: UNIVERSAL_HEADER_HEIGHT }
+           }} 
+        />
+        <Stack.Screen name="MainTabs" options= {{headerShown:false}} component={TabNavigator} />
+        <Stack.Screen name="AdminScreen" component={AdminScreen} options={{ title: 'Developer Dashboard' , headerShown: false}} />
+        <Stack.Screen 
+          name="Review" 
+          component={ReviewScreen} 
+          options={{ title: 'Location',
+            headerTintColor: '#FFFFFF',
+            headerStyle: { backgroundColor: colors.primary, height: UNIVERSAL_HEADER_HEIGHT }
+           }} 
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
