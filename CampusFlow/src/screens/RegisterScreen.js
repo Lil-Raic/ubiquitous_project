@@ -32,7 +32,7 @@ export default function RegisterScreen({ navigation }) {
         Alert.alert("Error", "This username already exists.");
         return;
       }
-
+//123456666666666
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
       await setDoc(usernameRef, {
