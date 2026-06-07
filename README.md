@@ -44,7 +44,7 @@ To run this project locally for development or evaluation:
 1. Clone the repository
 
 git clone <your-repository-url>
-cd FocusHive
+cd FocusFlow
 2. Install Dependencies
 
 npm install
